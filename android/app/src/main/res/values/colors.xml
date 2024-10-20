@@ -1,0 +1,7 @@
+<resources>
+    <color name="com_facebook_button_background_color_focused_disabled">#cccccc</color>
+    <color name="com_facebook_button_background_color_normal">#4267B2</color>
+    <color name="com_facebook_button_background_color_pressed">#365899</color>
+    <color name="com_facebook_button_background_color_focused">#365899</color>
+    <color name="com_facebook_button_border_color_focused">#3b5998</color>
+</resources>

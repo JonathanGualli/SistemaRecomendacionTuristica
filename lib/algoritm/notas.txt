@@ -1,0 +1,169 @@
+10-08-2024 11:10 pm 
+Necesito saber como será mi población.
+
+Antes, en el ejemplo sencillo era de esta forma: (población de 10)
+[[3, 1, 2, 0, 4], [2, 3, 0, 1, 4], [0, 3, 2, 4, 1], [2, 0, 3, 4, 1], 
+[0, 4, 2, 1, 3], [3, 0, 2, 1, 4], [2, 4, 1, 3, 0], [3, 0, 1, 2, 4], 
+[0, 3, 4, 2, 1], [0, 1, 4, 2, 3]]
+
+Ahora como será? ... primero debo definir un punto, cual será?
+Pensaba en coordenadas, pero, teniendo en cuenta, son solo puntos, 
+y el punto yá está definido por las coordenadas, creo que sería el nobre del lugar. 
+nombre o id? ... id es unico pero nombre es mas representativo... aunque, generar esto? sería complicado, no? 
+al igual que el id, sigue teniendo la misma complejidad, ptmdr. 
+bien, queda definidido, será el nombre. 
+
+Listo, la primera funcion, aunque a decir verdad, la mas facil, como sea. 
+
+
+Nueva mejor ruta encontrada con fitness: 27.09177826788472, [Galerie Thaddaeus Ropac, Little Red Door, Slow Galerie, BAMBINO, Bastille Design Center, Aquarium Design Paris : conception et installation d'aquariums, Le Perchoir, Rosa Bonheur Buttes Chaumont, Folie des Visites, Seven Squares Paris, La Gare - Le Gore, O'Sullivans, Musée Banksy - The World Of Banksy - Paris, aquarioslands, Balançoires, Gagosian, Rosa Bonheur sur Seine, Parque De Diversão, Galerie Gallimard, VA, Amelie, Maison d'art, Le Caveau de la Huchette, thanina thannina, Bowling Mouffetard, Le Mazette, Flaneur, Les Nautes, Polka Galerie, Perrotin, Galleria Continua | Paris]
+
+Nueva mejor ruta encontrada con fitness: 26.7802318581178, [Les Nautes, Flaneur, Le Mazette, Bowling Mouffetard, thanina thannina, Le Caveau de la Huchette, Amelie, Maison d'art, VA, Galerie Gallimard, Parque De Diversão, Rosa Bonheur sur Seine, Gagosian, Balançoires, aquarioslands, Musée Banksy - The World Of Banksy - Paris, O'Sullivans, La Gare - Le Gore, Seven Squares Paris, Folie des Visites, Rosa Bonheur Buttes Chaumont, Le Perchoir, Aquarium Design Paris : conception et installation d'aquariums, Bastille Design Center, BAMBINO, Slow Galerie, Little Red Door, Galleria Continua | Paris, Galerie Thaddaeus Ropac, Perrotin, Polka Galerie]
+
+
+
+
+I/flutter ( 5462): 0.00	0.00	0.00	3.60	2.35	3.22	3.78	3.75	2.45	1.88	
+I/flutter ( 5462): 3.60	3.60	3.60	0.00	5.62	0.42	4.38	6.11	5.45	5.41	
+I/flutter ( 5462): 2.35	2.35	2.35	5.62	0.00	5.31	5.87	2.05	3.41	2.06	
+I/flutter ( 5462): 3.22	3.22	3.22	0.42	5.31	0.00	4.03	5.90	5.03	5.01	
+I/flutter ( 5462): 3.78	3.78	3.78	4.38	5.87	4.03	0.00	7.52	3.11	4.18	
+I/flutter ( 5462): 3.75	3.75	3.75	6.11	2.05	5.90	7.52	0.00	5.40	4.09	
+I/flutter ( 5462): 2.45	2.45	2.45	5.45	3.41	5.03	3.11	5.40	0.00	1.36	
+I/flutter ( 5462): 1.88	1.88	1.88	5.41	2.06	5.01	4.18	4.09	1.36	0.00	
+
+
+
+---- NOTAS 12/10/2024 ------
+I/flutter (11069): 14
+I/flutter (11069): 0.00	3.61	4.38	5.32	0.18	0.01	5.85	0.01	5.99	3.55	4.84	4.06	2.80	4.76	
+I/flutter (11069): 3.61	0.00	1.26	4.56	3.61	3.61	3.69	3.61	6.29	1.88	1.95	5.47	2.77	4.87	
+I/flutter (11069): 4.38	1.26	0.00	3.68	4.42	4.38	2.49	4.38	5.60	1.37	0.69	5.22	2.63	4.25	
+I/flutter (11069): 5.32	4.56	3.68	0.00	5.47	5.33	2.05	5.33	2.06	2.71	3.25	2.93	2.59	1.19	
+I/flutter (11069): 0.18	3.61	4.42	5.47	0.00	0.16	5.96	0.16	6.16	3.64	4.91	4.23	2.93	4.92	
+I/flutter (11069): 0.01	3.61	4.38	5.33	0.16	0.00	5.86	0.00	6.00	3.56	4.85	4.07	2.81	4.77	
+I/flutter (11069): 5.85	3.69	2.49	2.05	5.96	5.86	0.00	5.86	4.09	2.37	1.82	4.74	3.17	3.14	
+I/flutter (11069): 0.01	3.61	4.38	5.33	0.16	0.00	5.86	0.00	6.00	3.56	4.85	4.07	2.81	4.77	
+I/flutter (11069): 5.99	6.29	5.60	2.06	6.16	6.00	4.09	6.00	0.00	4.43	5.25	2.23	3.77	1.44	
+I/flutter (11069): 3.55	1.88	1.37	2.71	3.64	3.56	2.37	3.56	4.43	0.00	1.47	3.85	1.28	3.01	
+I/flutter (11069): 4.84	1.95	0.69	3.25	4.91	4.85	1.82	4.85	5.25	1.47	0.00	5.14	2.73	3.97	
+I/flutter (11069): 4.06	5.47	5.22	2.93	4.23	4.07	4.74	4.07	2.23	3.85	5.14	0.00	2.70	1.76	
+I/flutter (11069): 2.80	2.77	2.63	2.59	2.93	2.81	3.17	2.81	3.77	1.28	2.73	2.70	0.00	2.35	
+I/flutter (11069): 4.76	4.87	4.25	1.19	4.92	4.77	3.14	4.77	1.44	3.01	3.97	1.76	2.35	0.00	
+I/flutter (11069): Aquaboulevard
+I/flutter (11069): Fête à Neuneu
+I/flutter (11069): Le Monde de Noé
+I/flutter (11069): Parque De Diversão
+I/flutter (11069): Aquaboulevard de Paris Minigolf Course
+I/flutter (11069): Aqua'Gliss
+I/flutter (11069): Balançoires
+I/flutter (11069): Ali ABOU
+I/flutter (11069): thanina thannina
+I/flutter (11069): Aquarium de Paris
+I/flutter (11069): Aquarilis Paris
+I/flutter (11069): Aquamah (Création, entretien, conseil pour votre aquarium)
+I/flutter (11069): Océanopolis à
+I/flutter (11069): VA
+
+
+I/flutter (11069): 14
+I/flutter (11069): 0.00	3.61	4.38	5.32	0.18	0.01	5.85	0.01	5.99	3.55	4.84	4.06	2.80	4.76	
+I/flutter (11069): 3.61	0.00	1.26	4.56	3.61	3.61	3.69	3.61	6.29	1.88	1.95	5.47	2.77	4.87	
+I/flutter (11069): 4.38	1.26	0.00	3.68	4.42	4.38	2.49	4.38	5.60	1.37	0.69	5.22	2.63	4.25	
+I/flutter (11069): 5.32	4.56	3.68	0.00	5.47	5.33	2.05	5.33	2.06	2.71	3.25	2.93	2.59	1.19	
+I/flutter (11069): 0.18	3.61	4.42	5.47	0.00	0.16	5.96	0.16	6.16	3.64	4.91	4.23	2.93	4.92	
+I/flutter (11069): 0.01	3.61	4.38	5.33	0.16	0.00	5.86	0.00	6.00	3.56	4.85	4.07	2.81	4.77	
+I/flutter (11069): 5.85	3.69	2.49	2.05	5.96	5.86	0.00	5.86	4.09	2.37	1.82	4.74	3.17	3.14	
+I/flutter (11069): 0.01	3.61	4.38	5.33	0.16	0.00	5.86	0.00	6.00	3.56	4.85	4.07	2.81	4.77	
+I/flutter (11069): 5.99	6.29	5.60	2.06	6.16	6.00	4.09	6.00	0.00	4.43	5.25	2.23	3.77	1.44	
+I/flutter (11069): 3.55	1.88	1.37	2.71	3.64	3.56	2.37	3.56	4.43	0.00	1.47	3.85	1.28	3.01	
+I/flutter (11069): 4.84	1.95	0.69	3.25	4.91	4.85	1.82	4.85	5.25	1.47	0.00	5.14	2.73	3.97	
+I/flutter (11069): 4.06	5.47	5.22	2.93	4.23	4.07	4.74	4.07	2.23	3.85	5.14	0.00	2.70	1.76	
+I/flutter (11069): 2.80	2.77	2.63	2.59	2.93	2.81	3.17	2.81	3.77	1.28	2.73	2.70	0.00	2.35	
+I/flutter (11069): 4.76	4.87	4.25	1.19	4.92	4.77	3.14	4.77	1.44	3.01	3.97	1.76	2.35	0.00	
+I/flutter (11069): Aquaboulevard
+I/flutter (11069): Fête à Neuneu
+I/flutter (11069): Le Monde de Noé
+I/flutter (11069): Parque De Diversão
+I/flutter (11069): Aquaboulevard de Paris Minigolf Course
+I/flutter (11069): Aqua'Gliss
+I/flutter (11069): Balançoires
+I/flutter (11069): Ali ABOU
+I/flutter (11069): thanina thannina
+I/flutter (11069): Aquarium de Paris
+I/flutter (11069): Aquarilis Paris
+I/flutter (11069): Aquamah (Création, entretien, conseil pour votre aquarium)
+I/flutter (11069): Océanopolis à
+I/flutter (11069): VA
+
+
+I/flutter (11069): 0.00	3.16	3.56	3.30	2.19	3.32	3.18	3.30	3.18	3.03	1.92	3.28	1.93	0.80	1.65	
+I/flutter (11069): 3.16	0.00	3.61	4.38	5.32	0.18	0.01	5.85	0.01	5.99	3.55	4.84	4.06	2.80	4.76	
+I/flutter (11069): 3.56	3.61	0.00	1.26	4.56	3.61	3.61	3.69	3.61	6.29	1.88	1.95	5.47	2.77	4.87	
+I/flutter (11069): 3.30	4.38	1.26	0.00	3.68	4.42	4.38	2.49	4.38	5.60	1.37	0.69	5.22	2.63	4.25	
+I/flutter (11069): 2.19	5.32	4.56	3.68	0.00	5.47	5.33	2.05	5.33	2.06	2.71	3.25	2.93	2.59	1.19	
+I/flutter (11069): 3.32	0.18	3.61	4.42	5.47	0.00	0.16	5.96	0.16	6.16	3.64	4.91	4.23	2.93	4.92	
+I/flutter (11069): 3.18	0.01	3.61	4.38	5.33	0.16	0.00	5.86	0.00	6.00	3.56	4.85	4.07	2.81	4.77	
+I/flutter (11069): 3.30	5.85	3.69	2.49	2.05	5.96	5.86	0.00	5.86	4.09	2.37	1.82	4.74	3.17	3.14	
+I/flutter (11069): 3.18	0.01	3.61	4.38	5.33	0.16	0.00	5.86	0.00	6.00	3.56	4.85	4.07	2.81	4.77	
+I/flutter (11069): 3.03	5.99	6.29	5.60	2.06	6.16	6.00	4.09	6.00	0.00	4.43	5.25	2.23	3.77	1.44	
+I/flutter (11069): 1.92	3.55	1.88	1.37	2.71	3.64	3.56	2.37	3.56	4.43	0.00	1.47	3.85	1.28	3.01	
+I/flutter (11069): 3.28	4.84	1.95	0.69	3.25	4.91	4.85	1.82	4.85	5.25	1.47	0.00	5.14	2.73	3.97	
+I/flutter (11069): 1.93	4.06	5.47	5.22	2.93	4.23	4.07	4.74	4.07	2.23	3.85	5.14	0.00	2.70	1.76	
+I/flutter (11069): 0.80	2.80	2.77	2.63	2.59	2.93	2.81	3.17	2.81	3.77	1.28	2.73	2.70	0.00	2.35	
+I/flutter (11069): 1.65	4.76	4.87	4.25	1.19	4.92	4.77	3.14	4.77	1.44	3.01	3.97	1.76	2.35	0.00	
+I/flutter (11069): startingPoint
+I/flutter (11069): Aquaboulevard
+I/flutter (11069): Fête à Neuneu
+I/flutter (11069): Le Monde de Noé
+I/flutter (11069): Parque De Diversão
+I/flutter (11069): Aquaboulevard de Paris Minigolf Course
+I/flutter (11069): Aqua'Gliss
+I/flutter (11069): Balançoires
+I/flutter (11069): Ali ABOU
+I/flutter (11069): thanina thannina
+I/flutter (11069): Aquarium de Paris
+I/flutter (11069): Aquarilis Paris
+I/flutter (11069): Aquamah (Création, entretien, conseil pour votre aquarium)
+I/flutter (11069): Océanopolis à
+I/flutter (11069): VA
+
+
+I/flutter (16251): [{startTime: 2024-10-17T08:30:00Z, values: {humidity: 89.49, precipitationIntensity: 2.31, precipitationProbability: 20, precipitationType: 1, temperature: 17.53, weatherCode: 4200, windSpeed: 2.63}}, {startTime: 2024-10-17T09:00:00Z, values: {humidity: 87.65, precipitationIntensity: 2.31, precipitationProbability: 20, precipitationType: 1, temperature: 17.82, weatherCode: 4200, windSpeed: 2.49}}, {startTime: 2024-10-17T09:30:00Z, values: {humidity: 86.84, precipitationIntensity: 0.23, precipitationProbability: 25, precipitationType: 1, temperature: 17.92, weatherCode: 1001, windSpeed: 1.99}}]
+I/flutter (16251): [{startTime: 2024-10-17T10:00:00Z, values: {humidity: 86.03, precipitationIntensity: 0.23, precipitationProbability: 25, precipitationType: 1, temperature: 18.02, weatherCode: 1001, windSpeed: 1.49}}, {startTime: 2024-10-17T10:30:00Z, values: {humidity: 84.12, precipitationIntensity: 0.55, precipitationProbability: 25, precipitationType: 1, temperature: 18.37, weatherCode: 4200, windSpeed: 1.3}}, {startTime: 2024-10-17T11:00:00Z, values: {humidity: 82.22, precipitationIntensity: 0.55, precipitationProbability: 25, precipitationType: 1, temperature: 18.73, weatherCode: 4200, windSpeed: 1.11}}]
+I/flutter (16251): [{startTime: 2024-10-17T11:30:00Z, values: {humidity: 81.22, precipitationIntensity: 1.58, precipitationProbability: 25, precipitationType: 1, temperature: 18.82, weatherCode: 4200, windSpeed: 0.9}}, {startTime: 2024-10-17T12:00:00Z, values: {humidity: 80.23, precipitationIntensity: 1.58, precipitationProbability: 25, precipitationType: 1, temperature: 18.91, weatherCode: 4200, windSpeed: 0.69}}, {startTime: 2024-10-17T12:30:00Z, values: {humidity: 80.47, precipitationIntensity: 0.05, precipitationProbability: 20, precipitationType: 1, temperature: 18.92, weatherCode: 1001, windSpeed: 0.51}}]
+I/flutter (16251): [{startTime: 2024-10-17T13:00:00Z, values: {humidity: 80.7, precipitationIntensity: 0.05, precipitationProbability: 20, precipitationType: 1, temperature: 18.94, weatherCode: 1001, windSpeed: 0.34}}, {startTime: 2024-10-17T13:30:00Z, values: {humidity: 80.19, precipitationIntensity: 0.04, precipitationProbability: 20, precipitationType: 1, temperature: 19.02, weatherCode: 1001, windSpeed: 0.63}}, {startTime: 2024-10-17T14:00:00Z, values: {humidity: 79.68, precipitationIntensity: 0.04, precipitationProbability: 20, precipitationType: 1, temperature: 19.11, weatherCode: 1001, windSpeed: 0.92}}]
+I/flutter (16251): [{startTime: 2024-10-17T14:30:00Z, values: {humidity: 81.42, precipitationIntensity: 1.42, precipitationProbability: 25, precipitationType: 1, temperature: 18.88, weatherCode: 4200, windSpeed: 1.34}}, {startTime: 2024-10-17T15:00:00Z, values: {humidity: 83.15, precipitationIntensity: 1.42, precipitationProbability: 25, precipitationType: 1, temperature: 18.66, weatherCode: 4200, windSpeed: 1.77}}, {startTime: 2024-10-17T15:30:00Z, values: {humidity: 87.04, precipitationIntensity: 5.88, precipitationProbability: 25, precipitationType: 1, temperature: 18.24, weatherCode: 4001, windSpeed: 2.17}}]
+I/flutter (16251): [{startTime: 2024-10-17T16:00:00Z, values: {humidity: 90.93, precipitationIntensity: 5.88, precipitationProbability: 25, precipitationType: 1, temperature: 17.82, weatherCode: 4001, windSpeed: 2.56}}, {startTime: 2024-10-17T16:30:00Z, values: {humidity: 91.74, precipitationIntensity: 0.22, precipitationProbability: 30, precipitationType: 1, temperature: 17.5, weatherCode: 1001, windSpeed: 2.87}}, {startTime: 2024-10-17T17:00:00Z, values: {humidity: 92.54, precipitationIntensity: 0.22, precipitationProbability: 30, precipitationType: 1, temperature: 17.19, weatherCode: 1001, windSpeed: 3.19}}]
+I/flutter (16251): [{startTime: 2024-10-17T17:30:00Z, values: {humidity: 92.32, precipitationIntensity: 0.39, precipitationProbability: 30, precipitationType: 1, temperature: 16.95, weatherCode: 4000, windSpeed: 3.3}}, {startTime: 2024-10-17T18:00:00Z, values: {humidity: 92.1, precipitationIntensity: 0.39, precipitationProbability: 30, precipitationType: 1, temperature: 16.71, weatherCode: 4000, windSpeed: 3.41}}, {startTime: 2024-10-17T18:30:00Z, values: {humidity: 91.09, precipitationIntensity: 0.47, precipitationProbability: 35, precipitationType: 1, temperature: 16.49, weatherCode: 4000, windSpeed: 3.45}}]
+I/flutter (16251): [{startTime: 2024-10-17T19:00:00Z, values: {humidity: 90.08, precipitationIntensity: 0.47, precipitationProbability: 35, precipitationType: 1, temperature: 16.26, weatherCode: 4000, windSpeed: 3.5}}, {startTime: 2024-10-17T19:30:00Z, values: {humidity: 91.92, precipitationIntensity: 2.13, precipitationProbability: 35, precipitationType: 1, temperature: 16.21, weatherCode: 4200, windSpeed: 3.44}}, {startTime: 2024-10-17T20:00:00Z, values: {humidity: 93.75, precipitationIntensity: 2.13, precipitationProbability: 35, precipitationType: 1, temperature: 16.16, weatherCode: 4200, windSpeed: 3.38}}]
+I/flutter (16251): Intervalo: 2024-10-17T08:30:00Z - 2024-10-17T09:30:00Z
+I/flutter (16251): Precipitación Máxima: 25
+I/flutter (16251): Intervalo: 2024-10-17T10:00:00Z - 2024-10-17T11:00:00Z
+I/flutter (16251): Precipitación Máxima: 25
+I/flutter (16251): Intervalo: 2024-10-17T11:30:00Z - 2024-10-17T12:30:00Z
+I/flutter (16251): Precipitación Máxima: 25
+I/flutter (16251): Intervalo: 2024-10-17T13:00:00Z - 2024-10-17T14:00:00Z
+I/flutter (16251): Precipitación Máxima: 20
+I/flutter (16251): Intervalo: 2024-10-17T14:30:00Z - 2024-10-17T15:30:00Z
+I/flutter (16251): Precipitación Máxima: 25
+I/flutter (16251): Intervalo: 2024-10-17T16:00:00Z - 2024-10-17T17:00:00Z
+I/flutter (16251): Precipitación Máxima: 30
+I/flutter (16251): Intervalo: 2024-10-17T17:30:00Z - 2024-10-17T18:30:00Z
+I/flutter (16251): Precipitación Máxima: 35
+
+
+
+balancoires 20.990897809804483
+monterging  20.990897809804483
+
+[f, true, true, true, true, true, false, false]
+
+vamos 
+1. I/flutter (12089): La mejor ruta encontrada con fitness: 34.06845932824814, [startingPoint, Seven Squares Paris, Aventure Fantastique, Polka Galerie, Flaneur, thanina thannina, Parque De Diversão, Galerie Thaddaeus Ropac, Perrotin]
+2. I/flutter (12089): La mejor ruta encontrada con fitness: 30.893051042520586, [startingPoint, MonterKing, Seven Squares Paris, Aventure Fantastique, Flaneur, thanina thannina, Galerie Thaddaeus Ropac, Polka Galerie, Slow Galerie]
+3. I/flutter (12089): La mejor ruta encontrada con fitness: 30.341439721507705, [startingPoint, MonterKing, Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Polka Galerie, Galleria Continua | Paris, Little Red Door]
+4. I/flutter (12089): La mejor ruta encontrada con fitness: 43.61212537252985, [startingPoint, MonterKing, Aventure Fantastique, Ground Control, Flaneur, Le Caveau de la Huchette, thanina thannina, Polka Galerie, Galerie Thaddaeus Ropac]
+5. I/flutter (12089): La mejor ruta encontrada con fitness: 45.13379826378299, [startingPoint, MonterKing, Seven Squares Paris, Aventure Fantastique, Bastille Design Center, thanina thannina, Galleria Continua | Paris, Little Red Door, Slow Galerie]
+6. I/flutter (12089): La mejor ruta encontrada con fitness: 29.822751176821807, [startingPoint, MonterKing, Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Bastille Design Center, Polka Galerie, Slow Galerie]
+
