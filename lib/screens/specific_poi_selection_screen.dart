@@ -382,6 +382,7 @@ class _SpecificPoiSelectionScreenState
                                         isOutdoor:
                                             PlaceTypeClassifier.isOutdoor(type),
                                         isMandatory: true,
+                                        urlImages: List.empty(growable: true),
                                       ),
                                     );
                                   }

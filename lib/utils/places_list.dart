@@ -188,6 +188,12 @@ class PlacesList {
       "name": "Centro cultural",
       "type": "cultural_center"
     },
+    {
+      "icon": Icons.castle_rounded,
+      "color": Colors.deepOrangeAccent,
+      "name": "Monumento Histórico",
+      "type": "historical_landmark"
+    },
   ];
 }
 

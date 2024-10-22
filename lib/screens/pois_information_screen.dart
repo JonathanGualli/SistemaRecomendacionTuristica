@@ -27,13 +27,14 @@ class _PoisInformationState extends State<PoisInformation> {
   LatLng initialLocation = PreferencesProvider.instance
       .getInitialLocation()!; // Punto inicial dentro de París
   double radius =
-      PreferencesProvider.instance.getRadius()!; // Radio en metros (3 km)
+      PreferencesProvider.instance.getRadius(); // Radio en metros (3 km)
   late List<String> types = PreferencesProvider.instance.getPreferences()!;
 
   List<Marker> markers = [];
   List<PlaceData> places = []; //Lista de lugares
   bool isLoading = true; // Variable para indicar si se está cargando
-  String currentType = "art_gallery";
+  String currentType =
+      "art_gallery"; // no importa, no afecta se actualiara luego a los tipos de la lista types.
 
   String jsonResponse = '';
 
@@ -90,9 +91,10 @@ class _PoisInformationState extends State<PoisInformation> {
                       Circle(
                         //Se traza visualmente un circulo en el mapa
                         circleId: const CircleId("radius"),
-                        center: LatLng(51.5074, -0.1278),
-                        //initialLocation, //El turista define el punto de partida
-                        radius: 20000.0, //radius, //Está definido con 4 km
+                        //center: LatLng(51.5074, -0.1278),
+                        center:
+                            initialLocation, //El turista define el punto de partida
+                        radius: radius,
                         fillColor: Colors.blue.withOpacity(0.3),
                         strokeColor: Colors.blue,
                         strokeWidth: 1,
@@ -387,6 +389,7 @@ class _PoisInformationState extends State<PoisInformation> {
                 weekdayDescriptions: weekdayDescriptions,
                 isOutdoor: PlaceTypeClassifier.isOutdoor(type),
                 isMandatory: false,
+                urlImages: List.empty(growable: true),
               );
 
               //Agregar a la lista de lugares y al conjunto de nombres
@@ -434,6 +437,16 @@ class _PoisInformationState extends State<PoisInformation> {
 
       setState(() {
         markers = allMarkers;
+        markers.add(Marker(
+          markerId: MarkerId("Punto de partida"),
+          position: initialLocation,
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          infoWindow: InfoWindow(
+            title: 'Punto de Partida',
+            snippet: 'Este es el punto de inicio de tu ruta',
+          ),
+        ));
         jsonResponse = allJsonResponse;
         places = allPLaces;
         PreferencesProvider.instance.setPlaces(places);

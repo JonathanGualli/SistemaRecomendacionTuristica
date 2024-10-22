@@ -7,7 +7,7 @@ class PreferencesProvider extends ChangeNotifier {
 
   String? _selectedCity; // Ciudad seleccionada
   LatLng? _initialLocation; // Punto de partida
-  double? _radius =
+  double _radius =
       4000; //Por defecto sera de 4km. En el futuro sea modificable por el usuario
   List<String> _preferences = []; // Lista de preferencias
   TimeOfDay? _startTime; // Hora inicio del recorrido
@@ -15,6 +15,8 @@ class PreferencesProvider extends ChangeNotifier {
   DateTime _date = DateTime.now(); // Fecha del itinerario
   List<PlaceData>? _specificPoiSelected; // Puntos de interés específicos
   List<PlaceData>? _places; // Totos los POI
+  List<PlaceData> _resultPlaces = List.empty(growable: true); // Resultado final
+  List<Map<String, dynamic>> _groupedData = [];
 
   //Getters
 
@@ -52,7 +54,7 @@ class PreferencesProvider extends ChangeNotifier {
     return _initialLocation;
   }
 
-  double? getRadius() {
+  double getRadius() {
     return _radius;
   }
 
@@ -68,11 +70,16 @@ class PreferencesProvider extends ChangeNotifier {
     return _places;
   }
 
+  List<PlaceData> getResultPlaces() {
+    return _resultPlaces;
+  }
+
   // Getters
   String? get selectedCity => _selectedCity;
   LatLng? get initialLocation => _initialLocation;
   double? get radius => _radius;
   List<String> get preferences => _preferences;
+  List<Map<String, dynamic>> get groupedData => _groupedData;
 
   // Setters
 
@@ -128,6 +135,16 @@ class PreferencesProvider extends ChangeNotifier {
 
   void setPlaces(List<PlaceData> places) {
     _places = places;
+    notifyListeners();
+  }
+
+  void setResultPlaces(List<PlaceData> resultPlaces) {
+    _resultPlaces = resultPlaces;
+    notifyListeners();
+  }
+
+  set groupedData(List<Map<String, dynamic>> data) {
+    _groupedData = data;
     notifyListeners();
   }
 }

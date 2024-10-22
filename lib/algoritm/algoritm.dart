@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
+import 'package:tesis_v2/screens/result_screen.dart';
 import 'package:tesis_v2/services/climate_service.dart';
+import 'package:tesis_v2/services/navigation_service.dart';
 
 class Algoritm extends StatefulWidget {
   const Algoritm({super.key});
@@ -18,12 +20,20 @@ class Algoritm extends StatefulWidget {
 class _AlgoritmState extends State<Algoritm> {
   late LatLng startPoint;
   late List<PlaceData> places;
+  List<PlaceData> resultPlaces = List.empty(growable: true);
+  Map<String, int> nameToIndex = {};
   List<dynamic>? climateDataList;
   final ClimateService _climateService = ClimateService();
   LatLng locationLatLng = PreferencesProvider.instance.getInitialLocation()!;
   List<bool> isOutdoorIntervals = [];
   String dateStart = PreferencesProvider.instance.getStartTIme()!;
   String dateEnd = PreferencesProvider.instance.getEndTime()!;
+  List<Map<String, dynamic>> groupedData = [];
+
+  Map<String, dynamic> bestRouteAll = {
+    'route': [],
+    'fitness': double.infinity,
+  };
 
   Future<void> fetchClimateData() async {
     climateDataList = await _climateService.fetchClimateData(
@@ -48,7 +58,6 @@ class _AlgoritmState extends State<Algoritm> {
 
   @override
   void initState() {
-    print("initstate");
     super.initState();
     fetchClimateData();
     places = PreferencesProvider.instance.getPlaces()!;
@@ -58,12 +67,16 @@ class _AlgoritmState extends State<Algoritm> {
     List<PlaceData> placesToRemove = [];
 
     for (var place in places) {
-      if (place.rating != 'null') {
-        if (double.parse(place.rating) <= 4) {
-          // Agrega el lugar a la lista de elementos a eliminar
-          if (place.isMandatory != true) {
-            placesToRemove.add(place);
+      if (!place.isMandatory) {
+        if (place.rating != 'null') {
+          if (double.parse(place.rating) <= 4) {
+            // Agrega el lugar a la lista de elementos a eliminar
+            if (place.isMandatory != true) {
+              placesToRemove.add(place);
+            }
           }
+        } else {
+          placesToRemove.add(place);
         }
       }
     }
@@ -86,6 +99,7 @@ class _AlgoritmState extends State<Algoritm> {
         weekdayDescriptions: List.empty(),
         isOutdoor: false,
         isMandatory: false,
+        urlImages: List.empty(growable: true),
       ),
     );
   }
@@ -122,7 +136,6 @@ class _AlgoritmState extends State<Algoritm> {
               List<List<double>> distanceMatrix =
                   generateDistanceMatrix(places);
 
-              Map<String, int> nameToIndex = {};
               for (int i = 0; i < places.length; i++) {
                 nameToIndex[places[i].name] =
                     i; // Asociar cada nombre con su índice
@@ -154,29 +167,44 @@ class _AlgoritmState extends State<Algoritm> {
           ElevatedButton(
             onPressed: () {
               isOutdoorIntervals = [];
-              List<Map<String, dynamic>> groupedData = [];
+              groupedData = [];
               int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
 
-              for (int i = 1; i < climateDataList!.length; i += 1) {
+              for (int i = 0; i < climateDataList!.length; i += 1) {
+                print(i);
                 if (i + interval > climateDataList!.length)
                   break; // Evita exceder la longitud
 
                 // Obtener el subgrupo de datos y hacer el cast explícito
                 List<Map<String, dynamic>> group = climateDataList!
-                    .sublist(i, i + interval)
+                    .sublist(i, i + interval + 1)
                     .cast<Map<String, dynamic>>();
                 print(group);
                 // Calcular el valor máximo de precipitationProbability
-                int maxPrecipitationProbability = group
+                /*                int maxPrecipitationProbability = group
                     .map((data) =>
                         data['values']['precipitationProbability'] as int)
                     .reduce((a, b) => a > b ? a : b);
+ */
+                int maxPrecipitationProbability = -1; // Inicializa la variable
+                int weatherCode = 0;
+                group.forEach((data) {
+                  int probability =
+                      data['values']['precipitationProbability'] as int;
+                  int code = data['values']['weatherCode'] as int;
+                  if (probability > maxPrecipitationProbability) {
+                    maxPrecipitationProbability = probability;
+                    weatherCode = code;
+                    print('debug code: $code');
+                  }
+                });
 
                 // Añadir al resultado agrupado
                 groupedData.add({
                   'startTime': group.first['startTime'],
                   'endTime': group.last['startTime'],
                   'maxPrecipitationProbability': maxPrecipitationProbability,
+                  'code': weatherCode,
                 });
 
                 // Agregar a isOutdoorIntervals según la probabilidad de precipitación
@@ -192,12 +220,15 @@ class _AlgoritmState extends State<Algoritm> {
                 print("Intervalo: ${data['startTime']} - ${data['endTime']}");
                 print(
                     "Precipitación Máxima: ${data['maxPrecipitationProbability']}");
+                print('COde ganador: ${data['code']}');
               });
 
               // Imprimir la lista de isOutdoorIntervals
               print("isOutdoorIntervals: $isOutdoorIntervals");
               print(groupedData.length);
               //print(groupedData.length);
+
+              PreferencesProvider.instance.groupedData = groupedData;
             },
             child: const Text("mostrar clima"),
           ),
@@ -208,7 +239,41 @@ class _AlgoritmState extends State<Algoritm> {
             child: Text('mostrar sitios'),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              print(bestRouteAll);
+
+              resultPlaces = [];
+
+              for (String placeName in bestRouteAll['route']) {
+                if (placeName != 'startingPoint') {
+                  // Acceder al índice utilizando el mapa nameToIndex
+                  //print(placeName);
+                  int index = nameToIndex[placeName]!;
+                  PlaceData placeData =
+                      places[index]; // Acceder a la instancia de PlaceData
+
+                  // Ahora puedes acceder a los atributos de placeData
+/*                   print('Nombre: ${placeData.name}');
+                  print('¿Es al aire libre?: ${placeData.isOutdoor}'); */
+
+                  resultPlaces.add(placeData);
+                  //print("HOla, ${placeData.name}");
+
+                  // Agrega más atributos según sea necesario
+                }
+              }
+
+              PreferencesProvider.instance.setResultPlaces(resultPlaces);
+
+              resultPlaces.forEach(
+                (element) {
+                  print(
+                      "Nombre: ${element.name}\nRating${element.rating}\nCordenadas ${element.coordinates}\n-------------------");
+                },
+              );
+              NavigationService.instance
+                  .navigatePushName(ResultScreen.routeName);
+            },
             child: Text("Ver resultado final "),
           ),
         ],
@@ -531,11 +596,6 @@ class _AlgoritmState extends State<Algoritm> {
     List<List<String>> population =
         generateInitialPopulationMain(populationSize, names, limit);
 
-    Map<String, dynamic> bestRouteAll = {
-      'route': [],
-      'fitness': double.infinity,
-    };
-
     for (int generation = 0; generation < generations; generation++) {
       List<double> fitnessValues = population
           .map((route) => calculateFitness(
@@ -597,6 +657,9 @@ class _AlgoritmState extends State<Algoritm> {
         // Ahora puedes acceder a los atributos de placeData
         print('Nombre: ${placeData.name}');
         print('¿Es al aire libre?: ${placeData.isOutdoor}');
+
+        resultPlaces.add(placeData);
+
         // Agrega más atributos según sea necesario
       }
     } */
@@ -700,6 +763,7 @@ class _AlgoritmState extends State<Algoritm> {
         weekdayDescriptions: [],
         isOutdoor: true, // O falso, según tu caso
         isMandatory: true, // O falso, según tu caso
+        urlImages: List.empty(growable: true),
       )
     ];
 

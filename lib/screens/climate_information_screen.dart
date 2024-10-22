@@ -96,10 +96,15 @@ class _ClimateInformationScreenState extends State<ClimateInformationScreen> {
   List<dynamic>? climateDataList;
   final ClimateService _climateService = ClimateService();
   LatLng locationLatLng = PreferencesProvider.instance.getInitialLocation()!;
+  String dateStart = PreferencesProvider.instance.getStartTIme()!;
+  String dateEnd = PreferencesProvider.instance.getEndTime()!;
 
   Future<void> fetchClimateData() async {
     climateDataList = await _climateService.fetchClimateData(
-        locationLatLng, '2024-10-17T08:00:00Z', '2024-10-17T20:00:00Z');
+      locationLatLng,
+      dateStart,
+      dateEnd,
+    );
     setState(() {}); // Actualiza la UI con los nuevos datos
   }
 
@@ -159,10 +164,16 @@ class _ClimateInformationScreenState extends State<ClimateInformationScreen> {
                         _buildClimateInfoRow(
                             'Weather Code', '${climateData['weatherCode']}'),
                         climateData['weatherCode'] == '4200'
-                            ? Image.network(_getWeatherIconUrl(
-                                climateData['weatherCode'].toString()))
-                            : SvgPicture.network(_getWeatherIconUrl(
-                                climateData['weatherCode'].toString())),
+                            ? Image.network(
+                                _getWeatherIconUrl(
+                                  climateData['weatherCode'].toString(),
+                                ),
+                              )
+                            : SvgPicture.network(
+                                _getWeatherIconUrl(
+                                  climateData['weatherCode'].toString(),
+                                ),
+                              ),
                       ],
                     ),
                   ),

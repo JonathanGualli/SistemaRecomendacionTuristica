@@ -167,3 +167,19 @@ vamos
 5. I/flutter (12089): La mejor ruta encontrada con fitness: 45.13379826378299, [startingPoint, MonterKing, Seven Squares Paris, Aventure Fantastique, Bastille Design Center, thanina thannina, Galleria Continua | Paris, Little Red Door, Slow Galerie]
 6. I/flutter (12089): La mejor ruta encontrada con fitness: 29.822751176821807, [startingPoint, MonterKing, Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Bastille Design Center, Polka Galerie, Slow Galerie]
 
+
+432.5629175310662
+432.56636253887774
+432.5629175310662
+457.5629175310662
+
+
+I/flutter ( 8782): La mejor ruta encontrada con fitness: 432.5629175310662, [startingPoint, Place Georges Pompidou, thanina thannina, Paris Plages, Place du Châtelet, Tunnel des Tuileries, Parque De Diversão, FlyView Paris, Les Passages Couverts de Paris 1]
+
+
+
+I/flutter (19296): La mejor ruta encontrada con fitness: 321.85235626426777, [startingPoint, MonterKing, Flaneur, thanina thannina, Museo del Louvre, Parque De Diversão, Torre Eiffel, Sciences Po, Science Po - Campus 1, Saint-Thomas]
+I/flutter (19296): La mejor ruta encontrada con fitness: 320.828323706309, [startingPoint, MonterKing, Torre Eiffel, Parque De Diversão, Museo del Louvre, thanina thannina, Flaneur, Uniqlo, Mairie du 10e arrondissement]
+
+
+

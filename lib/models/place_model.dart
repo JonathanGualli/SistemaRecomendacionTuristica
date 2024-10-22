@@ -103,18 +103,23 @@ class PlaceData {
   late final bool
       isOutdoor; // Nuevo atributo para indicar si el lugar es al aire libre
   late final bool isMandatory;
+  late final List<String> urlImages;
 
-  PlaceData({
-    required this.id,
-    required this.name,
-    required this.coordinates,
-    required this.rating,
-    required this.type,
-    required this.weekdayDescriptions,
-    required this.isOutdoor,
-    required this.isMandatory,
-  });
+  PlaceData(
+      {required this.id,
+      required this.name,
+      required this.coordinates,
+      required this.rating,
+      required this.type,
+      required this.weekdayDescriptions,
+      required this.isOutdoor,
+      required this.isMandatory,
+      required this.urlImages});
 
+/*   setImages(List<String> images) {
+    urlImages.addAll(images);
+  }
+ */
   factory PlaceData.fromJson(Map<String, dynamic> json) {
     // Determina si el lugar es al aire libre basado en el tipo
     const outdoorTypes = ['park', 'beach', 'zoo', 'garden'];
@@ -132,6 +137,7 @@ class PlaceData {
           json['regularOpeningHours']['weekdayDescriptions'] ?? []),
       isOutdoor: isOutdoor,
       isMandatory: json['isMandatory'],
+      urlImages: List.empty(growable: true),
     );
   }
 

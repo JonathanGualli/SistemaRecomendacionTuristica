@@ -13,6 +13,7 @@ import 'package:tesis_v2/screens/login_screen.dart';
 import 'package:tesis_v2/screens/pois_information_screen.dart';
 import 'package:tesis_v2/screens/preferences_selection_screen.dart';
 import 'package:tesis_v2/screens/profile_screen.dart';
+import 'package:tesis_v2/screens/result_screen.dart';
 import 'package:tesis_v2/screens/schedule_selection_screen.dart';
 import 'package:tesis_v2/screens/select_city_screen.dart';
 import 'package:tesis_v2/screens/select_initial_point_screen.dart';
@@ -75,6 +76,7 @@ class MyApp extends StatelessWidget {
           SpecificPoiSelectionScreen.routeName: (context) =>
               const SpecificPoiSelectionScreen(),
           Algoritm.routeName: (context) => const Algoritm(),
+          ResultScreen.routeName: (context) => const ResultScreen(),
         },
       ),
     );
