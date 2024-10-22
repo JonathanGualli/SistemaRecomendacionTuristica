@@ -104,17 +104,20 @@ class PlaceData {
       isOutdoor; // Nuevo atributo para indicar si el lugar es al aire libre
   late final bool isMandatory;
   late final List<String> urlImages;
+  late final String googleMapsUri;
 
-  PlaceData(
-      {required this.id,
-      required this.name,
-      required this.coordinates,
-      required this.rating,
-      required this.type,
-      required this.weekdayDescriptions,
-      required this.isOutdoor,
-      required this.isMandatory,
-      required this.urlImages});
+  PlaceData({
+    required this.id,
+    required this.name,
+    required this.coordinates,
+    required this.rating,
+    required this.type,
+    required this.weekdayDescriptions,
+    required this.isOutdoor,
+    required this.isMandatory,
+    required this.urlImages,
+    required this.googleMapsUri,
+  });
 
 /*   setImages(List<String> images) {
     urlImages.addAll(images);
@@ -138,8 +141,13 @@ class PlaceData {
       isOutdoor: isOutdoor,
       isMandatory: json['isMandatory'],
       urlImages: List.empty(growable: true),
+      googleMapsUri: '',
     );
   }
+
+/*   setGoogleMapsUri(String googleMaps) {
+    googleMapsUri = googleMaps;
+  } */
 
   Map<String, dynamic> toJson() {
     return {

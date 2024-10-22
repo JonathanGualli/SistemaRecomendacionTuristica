@@ -18,8 +18,8 @@ class Algoritm extends StatefulWidget {
 }
 
 class _AlgoritmState extends State<Algoritm> {
-  late LatLng startPoint;
-  late List<PlaceData> places;
+  LatLng startPoint = PreferencesProvider.instance.getInitialLocation()!;
+  List<PlaceData> places = [];
   List<PlaceData> resultPlaces = List.empty(growable: true);
   Map<String, int> nameToIndex = {};
   List<dynamic>? climateDataList;
@@ -53,6 +53,9 @@ class _AlgoritmState extends State<Algoritm> {
 
   @override
   void dispose() {
+    places.removeWhere(
+      (place) => place.name == 'startingPoint',
+    );
     super.dispose();
   }
 
@@ -88,6 +91,10 @@ class _AlgoritmState extends State<Algoritm> {
 
     print(places.length);
 
+    places.removeWhere(
+      (element) => element.name == 'startingPoint',
+    );
+
     places.insert(
       0,
       PlaceData(
@@ -100,13 +107,88 @@ class _AlgoritmState extends State<Algoritm> {
         isOutdoor: false,
         isMandatory: false,
         urlImages: List.empty(growable: true),
+        googleMapsUri: '',
       ),
     );
   }
 
+  void runAutomaticAlgoritm() {
+    //showClimaFunction();
+    isOutdoorIntervals = [];
+    groupedData = [];
+    int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
+    print('llego hasta aca');
+    for (int i = 0; i < climateDataList!.length; i += 1) {
+      print(i);
+      if (i + interval > climateDataList!.length) break;
+      List<Map<String, dynamic>> group = climateDataList!
+          .sublist(i, i + interval + 1)
+          .cast<Map<String, dynamic>>();
+      print(group);
+
+      int maxPrecipitationProbability = -1;
+      int weatherCode = 0;
+      group.forEach((data) {
+        int probability = data['values']['precipitationProbability'] as int;
+        int code = data['values']['weatherCode'] as int;
+        if (probability > maxPrecipitationProbability) {
+          maxPrecipitationProbability = probability;
+          weatherCode = code;
+          print('debug code: $code');
+        }
+      });
+      groupedData.add({
+        'startTime': group.first['startTime'],
+        'endTime': group.last['startTime'],
+        'maxPrecipitationProbability': maxPrecipitationProbability,
+        'code': weatherCode,
+      });
+
+      isOutdoorIntervals.add(maxPrecipitationProbability <= 25);
+      i += 2;
+    }
+    PreferencesProvider.instance.groupedData = groupedData;
+
+    //startFunction();
+
+    print(places.length);
+
+    List<List<double>> distanceMatrix = generateDistanceMatrix(places);
+
+    for (int i = 0; i < places.length; i++) {
+      nameToIndex[places[i].name] = i;
+    }
+    print(nameToIndex);
+    for (int i = 0; i < distanceMatrix.length; i++) {
+      String row = '';
+      for (int j = 0; j < distanceMatrix[i].length; j++) {
+        row += '${distanceMatrix[i][j].toStringAsFixed(2)}\t';
+      }
+    }
+    runGeneticAlgorithm(
+        600, 250, distanceMatrix, places, groupedData.length, nameToIndex);
+
+    //showResultFunction();
+    print(bestRouteAll);
+
+    resultPlaces = [];
+
+    for (String placeName in bestRouteAll['route']) {
+      if (placeName != 'startingPoint') {
+        int index = nameToIndex[placeName]!;
+        PlaceData placeData = places[index];
+        resultPlaces.add(placeData);
+      }
+    }
+
+    PreferencesProvider.instance.setResultPlaces(resultPlaces);
+    NavigationService.instance.navigatePushName(ResultScreen.routeName);
+  }
+
   @override
   Widget build(BuildContext context) {
-    startPoint = PreferencesProvider.instance.getInitialLocation()!;
+    //startPoint = PreferencesProvider.instance.getInitialLocation()!;
+    //runAutomaticAlgoritm();
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -128,30 +210,7 @@ class _AlgoritmState extends State<Algoritm> {
           ),
           ElevatedButton(
             onPressed: () {
-              print(places.length);
-
-              //List<PlaceData> limitPlaces = filterAndOrderPlaces(places, 8);
-              //print("LImitplaces = ${limitPlaces.length}");
-
-              List<List<double>> distanceMatrix =
-                  generateDistanceMatrix(places);
-
-              for (int i = 0; i < places.length; i++) {
-                nameToIndex[places[i].name] =
-                    i; // Asociar cada nombre con su índice
-              }
-              print(nameToIndex);
-              for (int i = 0; i < distanceMatrix.length; i++) {
-                String row = '';
-                for (int j = 0; j < distanceMatrix[i].length; j++) {
-                  row +=
-                      '${distanceMatrix[i][j].toStringAsFixed(2)}\t'; // Ajusta la precisión como prefieras
-                }
-                //debugPrint(row);
-              }
-              //places.forEach((element) => print(element.name));
-              runGeneticAlgorithm(
-                  600, 250, distanceMatrix, places, 8, nameToIndex);
+              startFunction();
 
               //PROBANDO EL METODO
               //generateInitialPopulationMain(5, getNamesOfPlaces(places));
@@ -166,69 +225,7 @@ class _AlgoritmState extends State<Algoritm> {
           ),
           ElevatedButton(
             onPressed: () {
-              isOutdoorIntervals = [];
-              groupedData = [];
-              int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
-
-              for (int i = 0; i < climateDataList!.length; i += 1) {
-                print(i);
-                if (i + interval > climateDataList!.length)
-                  break; // Evita exceder la longitud
-
-                // Obtener el subgrupo de datos y hacer el cast explícito
-                List<Map<String, dynamic>> group = climateDataList!
-                    .sublist(i, i + interval + 1)
-                    .cast<Map<String, dynamic>>();
-                print(group);
-                // Calcular el valor máximo de precipitationProbability
-                /*                int maxPrecipitationProbability = group
-                    .map((data) =>
-                        data['values']['precipitationProbability'] as int)
-                    .reduce((a, b) => a > b ? a : b);
- */
-                int maxPrecipitationProbability = -1; // Inicializa la variable
-                int weatherCode = 0;
-                group.forEach((data) {
-                  int probability =
-                      data['values']['precipitationProbability'] as int;
-                  int code = data['values']['weatherCode'] as int;
-                  if (probability > maxPrecipitationProbability) {
-                    maxPrecipitationProbability = probability;
-                    weatherCode = code;
-                    print('debug code: $code');
-                  }
-                });
-
-                // Añadir al resultado agrupado
-                groupedData.add({
-                  'startTime': group.first['startTime'],
-                  'endTime': group.last['startTime'],
-                  'maxPrecipitationProbability': maxPrecipitationProbability,
-                  'code': weatherCode,
-                });
-
-                // Agregar a isOutdoorIntervals según la probabilidad de precipitación
-                isOutdoorIntervals.add(maxPrecipitationProbability <=
-                    25); // True si es 30 o menos, false si es más
-
-                // Avanza al siguiente grupo
-                i += 2; // Avanza para el siguiente bloque de 1.5 horas
-              }
-
-              // Imprimir el resultado
-              groupedData.forEach((data) {
-                print("Intervalo: ${data['startTime']} - ${data['endTime']}");
-                print(
-                    "Precipitación Máxima: ${data['maxPrecipitationProbability']}");
-                print('COde ganador: ${data['code']}');
-              });
-
-              // Imprimir la lista de isOutdoorIntervals
-              print("isOutdoorIntervals: $isOutdoorIntervals");
-              print(groupedData.length);
-              //print(groupedData.length);
-
-              PreferencesProvider.instance.groupedData = groupedData;
+              showClimaFunction();
             },
             child: const Text("mostrar clima"),
           ),
@@ -240,45 +237,140 @@ class _AlgoritmState extends State<Algoritm> {
           ),
           ElevatedButton(
             onPressed: () {
-              print(bestRouteAll);
-
-              resultPlaces = [];
-
-              for (String placeName in bestRouteAll['route']) {
-                if (placeName != 'startingPoint') {
-                  // Acceder al índice utilizando el mapa nameToIndex
-                  //print(placeName);
-                  int index = nameToIndex[placeName]!;
-                  PlaceData placeData =
-                      places[index]; // Acceder a la instancia de PlaceData
-
-                  // Ahora puedes acceder a los atributos de placeData
-/*                   print('Nombre: ${placeData.name}');
-                  print('¿Es al aire libre?: ${placeData.isOutdoor}'); */
-
-                  resultPlaces.add(placeData);
-                  //print("HOla, ${placeData.name}");
-
-                  // Agrega más atributos según sea necesario
-                }
-              }
-
-              PreferencesProvider.instance.setResultPlaces(resultPlaces);
-
-              resultPlaces.forEach(
-                (element) {
-                  print(
-                      "Nombre: ${element.name}\nRating${element.rating}\nCordenadas ${element.coordinates}\n-------------------");
-                },
-              );
-              NavigationService.instance
-                  .navigatePushName(ResultScreen.routeName);
+              showResultFunction();
             },
             child: Text("Ver resultado final "),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> showResultFunction() async {
+    print(bestRouteAll);
+
+    resultPlaces = [];
+
+    for (String placeName in bestRouteAll['route']) {
+      if (placeName != 'startingPoint') {
+        // Acceder al índice utilizando el mapa nameToIndex
+        //print(placeName);
+        int index = nameToIndex[placeName]!;
+        PlaceData placeData =
+            places[index]; // Acceder a la instancia de PlaceData
+
+        // Ahora puedes acceder a los atributos de placeData
+        /*                   print('Nombre: ${placeData.name}');
+        print('¿Es al aire libre?: ${placeData.isOutdoor}'); */
+
+        resultPlaces.add(placeData);
+        //print("HOla, ${placeData.name}");
+
+        // Agrega más atributos según sea necesario
+      }
+    }
+
+    PreferencesProvider.instance.setResultPlaces(resultPlaces);
+
+    resultPlaces.forEach(
+      (element) {
+        print(
+            "Nombre: ${element.name}\nRating${element.rating}\nCordenadas ${element.coordinates}\n-------------------");
+      },
+    );
+    NavigationService.instance.navigatePushName(ResultScreen.routeName);
+  }
+
+  Future<void> startFunction() async {
+    print(places.length);
+
+    //List<PlaceData> limitPlaces = filterAndOrderPlaces(places, 8);
+    //print("LImitplaces = ${limitPlaces.length}");
+
+    List<List<double>> distanceMatrix = generateDistanceMatrix(places);
+
+    for (int i = 0; i < places.length; i++) {
+      nameToIndex[places[i].name] = i; // Asociar cada nombre con su índice
+    }
+    print(nameToIndex);
+    for (int i = 0; i < distanceMatrix.length; i++) {
+      String row = '';
+      for (int j = 0; j < distanceMatrix[i].length; j++) {
+        row +=
+            '${distanceMatrix[i][j].toStringAsFixed(2)}\t'; // Ajusta la precisión como prefieras
+      }
+      //debugPrint(row);
+    }
+    //places.forEach((element) => print(element.name));
+    runGeneticAlgorithm(
+        600, 250, distanceMatrix, places, groupedData.length, nameToIndex);
+
+    //PROBANDO EL METODO
+    //generateInitialPopulationMain(5, getNamesOfPlaces(places));
+  }
+
+  Future<void> showClimaFunction() async {
+    isOutdoorIntervals = [];
+    groupedData = [];
+    int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
+
+    for (int i = 0; i < climateDataList!.length; i += 1) {
+      print(i);
+      if (i + interval > climateDataList!.length)
+        break; // Evita exceder la longitud
+
+      // Obtener el subgrupo de datos y hacer el cast explícito
+      List<Map<String, dynamic>> group = climateDataList!
+          .sublist(i, i + interval + 1)
+          .cast<Map<String, dynamic>>();
+      print(group);
+      // Calcular el valor máximo de precipitationProbability
+      /*                int maxPrecipitationProbability = group
+          .map((data) =>
+              data['values']['precipitationProbability'] as int)
+          .reduce((a, b) => a > b ? a : b);
+     */
+      int maxPrecipitationProbability = -1; // Inicializa la variable
+      int weatherCode = 0;
+      group.forEach((data) {
+        int probability = data['values']['precipitationProbability'] as int;
+        int code = data['values']['weatherCode'] as int;
+        if (probability > maxPrecipitationProbability) {
+          maxPrecipitationProbability = probability;
+          weatherCode = code;
+          print('debug code: $code');
+        }
+      });
+
+      // Añadir al resultado agrupado
+      groupedData.add({
+        'startTime': group.first['startTime'],
+        'endTime': group.last['startTime'],
+        'maxPrecipitationProbability': maxPrecipitationProbability,
+        'code': weatherCode,
+      });
+
+      // Agregar a isOutdoorIntervals según la probabilidad de precipitación
+      isOutdoorIntervals.add(maxPrecipitationProbability <=
+          25); // True si es 25 o menos, false si es más
+
+      // Avanza al siguiente grupo
+      i += 2; // Avanza para el siguiente bloque de 1.5 horas
+    }
+
+    // Imprimir el resultado
+    groupedData.forEach((data) {
+      print("Intervalo: ${data['startTime']} - ${data['endTime']}");
+      print("Precipitación Máxima: ${data['maxPrecipitationProbability']}");
+      print('COde ganador: ${data['code']}');
+    });
+
+    // Imprimir la lista de isOutdoorIntervals
+    print("isOutdoorIntervals: $isOutdoorIntervals");
+    print(groupedData.length);
+    //print(groupedData.length);
+
+    PreferencesProvider.instance.groupedData = groupedData;
   }
 
 //FUNCION ANTES DEL PUNTO INICIAL
@@ -764,6 +856,7 @@ class _AlgoritmState extends State<Algoritm> {
         isOutdoor: true, // O falso, según tu caso
         isMandatory: true, // O falso, según tu caso
         urlImages: List.empty(growable: true),
+        googleMapsUri: '',
       )
     ];
 

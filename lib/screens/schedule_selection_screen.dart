@@ -194,7 +194,7 @@ class _ScheduleSelectionScreenState extends State<ScheduleSelectionScreen> {
                         child: SizedBox(
                           width: Dimensions.screenWidth * 0.75,
                           child: ElevatedButton(
-                            onPressed: () async {
+                            /* onPressed: () async {
                               if (startTime == null || endTime == null) {
                                 SnackBarService.instance.showSnackBar(
                                     "Por favor selecciona un horario correcto",
@@ -254,6 +254,75 @@ class _ScheduleSelectionScreenState extends State<ScheduleSelectionScreen> {
                                     fechaHoraInicio.toIso8601String() + 'Z';
 
                                 print('Hora inicio en formato ISO: $isoInicio'); */
+                              }
+                            }, */
+                            onPressed: () async {
+                              if (startTime == null || endTime == null) {
+                                SnackBarService.instance.showSnackBar(
+                                  "Por favor selecciona un horario correcto",
+                                  false,
+                                );
+                              } else {
+                                // Combinar fecha seleccionada con hora de inicio y fin
+                                DateTime startDateTime = DateTime(
+                                  date.year,
+                                  date.month,
+                                  date.day,
+                                  startTime!.hour,
+                                  startTime!.minute,
+                                );
+                                DateTime endDateTime = DateTime(
+                                  date.year,
+                                  date.month,
+                                  date.day,
+                                  endTime!.hour,
+                                  endTime!.minute,
+                                );
+
+                                // Obtener la fecha y hora actual
+                                DateTime now = DateTime.now();
+
+                                // Calcular el límite de 3 días desde la fecha actual
+                                DateTime maxDate =
+                                    now.add(const Duration(days: 4));
+
+                                // Verificar si la fecha seleccionada está dentro de los próximos 3 días
+                                if (date.isAfter(maxDate)) {
+                                  SnackBarService.instance.showSnackBar(
+                                    "Por favor selecciona una fecha dentro de los próximos 4 días",
+                                    false,
+                                  );
+                                } else if (startDateTime.isBefore(now)) {
+                                  // Verificar si la hora de inicio es antes de la hora actual
+                                  SnackBarService.instance.showSnackBar(
+                                    "Por favor selecciona una hora futura",
+                                    false,
+                                  );
+                                } else if (date.isAfter(dateNow
+                                    .subtract(const Duration(days: 1)))) {
+                                  // Guardar los datos si la fecha y hora son válidos
+                                  PreferencesProvider.instance
+                                      .setStartTime(startTime!);
+                                  PreferencesProvider.instance
+                                      .setEndTime(endTime!);
+                                  PreferencesProvider.instance.setDate(date);
+
+                                  NavigationService.instance.navigatePushName(
+                                    SpecificPoiSelectionScreen.routeName,
+                                  );
+                                } else {
+                                  SnackBarService.instance.showSnackBar(
+                                    "Por favor, selecciona una fecha correcta",
+                                    false,
+                                  );
+                                }
+
+                                print(
+                                    'Hora fin ${PreferencesProvider.instance.getEndTime()}');
+                                print(
+                                    'Hora inicio ${PreferencesProvider.instance.getStartTIme()}');
+                                print(
+                                    'Fecha recorrido ${PreferencesProvider.instance.getDate()}');
                               }
                             },
                             style: ElevatedButton.styleFrom(

@@ -257,7 +257,22 @@ class _SpecificPoiSelectionScreenState
                                               ),
                                             ),
                                           ),
-                                          const Spacer(),
+                                          IconButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  places.removeWhere(
+                                                    (placeToRemove) =>
+                                                        placeToRemove.id ==
+                                                        place.id,
+                                                  );
+                                                });
+                                              },
+                                              icon: const Icon(
+                                                Icons.cancel,
+                                                color: Colors.red,
+                                                size: 35,
+                                              ))
+                                          //const Spacer(),
                                         ],
                                       ),
                                     );
@@ -383,6 +398,7 @@ class _SpecificPoiSelectionScreenState
                                             PlaceTypeClassifier.isOutdoor(type),
                                         isMandatory: true,
                                         urlImages: List.empty(growable: true),
+                                        googleMapsUri: '',
                                       ),
                                     );
                                   }

@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:tesis_v2/screens/climate_information_screen.dart';
+import 'package:tesis_v2/services/navigation_service.dart';
 import 'package:tesis_v2/utils/climate_codes.dart';
 import 'dart:convert';
 
@@ -79,14 +81,12 @@ class _ResultScreenState extends State<ResultScreen> {
 
     int i = 1;
 
-    // Marcadores para los otros lugares
     for (var place in resultPlaces) {
       Marker marker = Marker(
         markerId: MarkerId(place.name),
         position: place.coordinates,
         infoWindow: InfoWindow(
           title: place.name,
-          //snippet: '$i: Rating: ${place.rating}, IsOutdoor: ${place.isOutdoor}',
         ),
       );
       markers.add(marker);
@@ -94,7 +94,6 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  // Crear una ruta (polilínea) que conecte los lugares
   void _createRoute() {
     List<LatLng> routeCoordinates =
         resultPlaces.map((place) => place.coordinates).toList();
@@ -102,54 +101,23 @@ class _ResultScreenState extends State<ResultScreen> {
     routeCoordinates.insert(0, initialLocation);
     //routeCoordinates.add(initialLocation);
 
-    // Crear una polilínea que conecte las coordenadas de los lugares
     Polyline route = Polyline(
       polylineId: const PolylineId('route'),
-      points: routeCoordinates, // Coordenadas de los lugares
-      color: Colors.blue, // Color de la ruta
-      width: 5, // Ancho de la línea
+      points: routeCoordinates,
+      color: Colors.blue,
+      width: 5,
     );
 
     polylines.add(route);
   }
 
-  // Función para mover la cámara a un lugar específico y mostrar información
   void _moveCameraToPlace(PlaceData place) async {
     mapController.animateCamera(
       CameraUpdate.newLatLngZoom(place.coordinates, 15.0),
     );
-    //mapController.animateCamera(CameraUpdate.newLatLngZoom(latLng, zoom))
-
-    // Mostrar la InfoWindow en el marcador correspondiente
     mapController.showMarkerInfoWindow(MarkerId(place.name));
 
-    // Obtener detalles del lugar
-    try {
-      //print(photoUrl);
-
-      // Muestra un diálogo con la información del lugar y la foto
-      /* showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(place.name),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (photoUrl != null) Image.network(photoUrl),
-              Text('Rating: ${place.rating}'),
-              Text('Tipo: ${place.type}'),
-              Text(place.isOutdoor ? 'Al aire libre' : 'Cubierto'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cerrar'),
-            ),
-          ],
-        ),
-      ); */
-    } catch (e) {
+    try {} catch (e) {
       debugPrint('Error fetching place details: $e');
     }
   }
@@ -160,29 +128,31 @@ class _ResultScreenState extends State<ResultScreen> {
         final details = await fetchPlaceDetails(place.id);
         setState(() {
           place.urlImages.addAll(getPhotoUrls(details));
+          //print(details['googleMapsUri']);
+          //place.googleMapsUri = details['googleMapsUri'];
+          //place.setGoogleMapsUri(details['googleMapsUri']);
           //place.setImages();
         });
       }
     }
   }
 
-  // Función para obtener detalles del lugar a través de la API de Google Places
   Future<Map<String, dynamic>> fetchPlaceDetails(String placeId) async {
-    const apiKey =
-        'AIzaSyBlS_zZbl-suYNlnxpUHJKR2jqJ49Quspo'; // Reemplaza con tu API Key
+    //await Future.delayed(const Duration(seconds: 1));
+    const apiKey = 'AIzaSyBlS_zZbl-suYNlnxpUHJKR2jqJ49Quspo';
     final url = 'https://places.googleapis.com/v1/places/$placeId';
 
     final headers = {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': apiKey,
-      'X-Goog-FieldMask': 'id,displayName,photos'
+      'X-Goog-FieldMask': 'id,displayName,photos,googleMapsUri'
     };
 
     final response = await http.get(
       Uri.parse(url),
       headers: headers,
     );
-    //debugPrint(response.body);
+    //print(response.body);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -190,7 +160,6 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  // Función para obtener la URL de la foto a partir de los detalles del lugar
   String getPhotoUrl(Map<String, dynamic> details) {
     if (details['photos'] != null && details['photos'].isNotEmpty) {
       String photoReference = details['photos'][0]['name'];
@@ -200,7 +169,6 @@ class _ResultScreenState extends State<ResultScreen> {
     return '';
   }
 
-  // Función para obtener la lista de URLs de fotos a partir de los detalles del lugar
   List<String> getPhotoUrls(Map<String, dynamic> details) {
     if (details['photos'] != null && details['photos'].isNotEmpty) {
       List<String> photoUrls = [];
@@ -216,7 +184,7 @@ class _ResultScreenState extends State<ResultScreen> {
       return photoUrls;
     }
 
-    return List.empty(growable: true); // No hay fotos disponibles
+    return List.empty(growable: true);
   }
 
   @override
@@ -235,22 +203,20 @@ class _ResultScreenState extends State<ResultScreen> {
       body: Column(
         children: [
           Expanded(
-            flex: 4, // Proporción de espacio para el mapa
+            flex: 4,
             child: Stack(
               children: [
                 GoogleMap(
                   onMapCreated: (GoogleMapController controller) {
-                    mapController =
-                        controller; // Asigna el controlador del mapa
+                    mapController = controller;
                   },
-                  markers: Set.from(markers), // Marcadores de los lugares
-                  polylines:
-                      Set.from(polylines), // Ruta trazada entre los lugares
+                  markers: Set.from(markers),
+                  polylines: Set.from(polylines),
                   initialCameraPosition: CameraPosition(
-                    target: initialLocation, // Ubicación inicial en el mapa
+                    target: initialLocation,
                     zoom: 14.0,
                   ),
-                  zoomControlsEnabled: false, // Quitamos los botones de zoom
+                  zoomControlsEnabled: false,
                   compassEnabled: true,
                   circles: {
                     Circle(
@@ -268,7 +234,6 @@ class _ResultScreenState extends State<ResultScreen> {
                   right: 10,
                   child: FloatingActionButton(
                     onPressed: () {
-                      // Acción para centrar el mapa en la ubicación inicial
                       mapController.animateCamera(
                         CameraUpdate.newCameraPosition(
                           CameraPosition(target: initialLocation, zoom: 14.0),
@@ -286,10 +251,6 @@ class _ResultScreenState extends State<ResultScreen> {
             flex: 6,
             child: Column(
               children: [
-/*                 Expanded(
-                  flex: 2,
-                  child: Center(child: Text('Tu itinearario')),
-                ), */
                 Spacer(
                   flex: 1,
                 ),
@@ -314,28 +275,62 @@ class _ResultScreenState extends State<ResultScreen> {
                                       groupedData[index]['startTime'],
                                       groupedData[index]['endTime'],
                                     ),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blueGrey,
+                                    ),
                                   ),
-                                  Row(
-                                    children: [
-/*                                       Text(
-                                          'Clima: ${groupedData[index]["maxPrecipitationProbability"]} %'), */
-                                      const Text('Clima: '),
-                                      groupedData[index]['code'] == 4200
-                                          ? Image.network(
-                                              _getWeatherIconUrl(
-                                                groupedData[index]['code']
-                                                    .toString(),
+                                  GestureDetector(
+                                    onTap: () {
+                                      NavigationService.instance
+                                          .navigatePushName(
+                                              ClimateInformationScreen
+                                                  .routeName);
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Clima: ',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black54),
+                                        ),
+                                        groupedData[index]['code'] == 4200
+                                            ? Image.network(
+                                                _getWeatherIconUrl(
+                                                  groupedData[index]['code']
+                                                      .toString(),
+                                                ),
+                                                height: 30,
+                                              )
+                                            : SvgPicture.network(
+                                                _getWeatherIconUrl(
+                                                  groupedData[index]['code']
+                                                      .toString(),
+                                                ),
+                                                height: 30,
                                               ),
-                                              height: 25,
-                                            )
-                                          : SvgPicture.network(
-                                              _getWeatherIconUrl(
-                                                groupedData[index]['code']
-                                                    .toString(),
-                                              ),
-                                            ),
-                                    ],
-                                  )
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '${groupedData[index]["maxPrecipitationProbability"]}%',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: groupedData[index][
+                                                        "maxPrecipitationProbability"] >
+                                                    25
+                                                ? Colors.red
+                                                : Colors
+                                                    .blue, // Color del porcentaje
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  //Text('Prob')
                                 ],
                               ),
                             ),
@@ -344,11 +339,9 @@ class _ResultScreenState extends State<ResultScreen> {
                             flex: 10,
                             child: GestureDetector(
                               onTap: () {
-                                // Mover la cámara al lugar correspondiente y mostrar la InfoWindow
                                 _moveCameraToPlace(place);
-                                //print(place.type);
-                                //print(place.urlImages);
-                                print(groupedData);
+
+                                print(place.googleMapsUri);
                               },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
@@ -368,13 +361,10 @@ class _ResultScreenState extends State<ResultScreen> {
                                           image: NetworkImage(
                                               place.urlImages.first),
                                           fit: BoxFit.cover,
-                                          /*                      opacity: 0.5,
-                                          colorFilter:
-                                              const ColorFilter.srgbToLinearGamma(), */
                                         )
                                       : null,
                                 ),
-                                width: 160, // Ajusta el ancho de cada tarjeta
+                                width: 160,
                                 child: Stack(
                                   children: [
                                     Positioned(
@@ -387,14 +377,6 @@ class _ResultScreenState extends State<ResultScreen> {
                                             bottomLeft: Radius.circular(15),
                                             bottomRight: Radius.circular(15),
                                           ),
-                                          /* gradient: LinearGradient(
-                                            colors: [
-                                              Colors.black.withOpacity(0.7),
-                                              Colors.transparent,
-                                            ],
-                                            begin: Alignment.bottomCenter,
-                                            end: Alignment.topCenter,
-                                          ), */
                                           color: Colors.black.withOpacity(0.7),
                                         ),
                                         padding: const EdgeInsets.all(8),
@@ -419,7 +401,9 @@ class _ResultScreenState extends State<ResultScreen> {
                                                     color: Colors.yellowAccent,
                                                     size: 16),
                                                 Text(
-                                                  ' ${place.rating}',
+                                                  place.rating == 'null'
+                                                      ? ' Sin información'
+                                                      : ' ${place.rating}',
                                                   style: const TextStyle(
                                                       color: Colors.white70,
                                                       fontSize: 12),
@@ -509,14 +493,14 @@ class _ResultScreenState extends State<ResultScreen> {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-          ), // Cuadro de diálogo con bordes redondeados
-          backgroundColor: Colors.transparent, // Fondo transparente
+          ),
+          backgroundColor: Colors.transparent,
           child: Container(
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(
                 0.7,
-              ), // Fondo oscuro con opacidad
+              ),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -532,9 +516,9 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
                 const SizedBox(
                   height: 10,
-                ), // Espaciado
+                ),
                 SizedBox(
-                  height: 300, // Altura del visor de imágenes
+                  height: 300,
                   child: place.urlImages.isNotEmpty
                       ? Stack(
                           children: [
@@ -576,7 +560,6 @@ class _ResultScreenState extends State<ResultScreen> {
                                 );
                               },
                             ),
-                            // Botón para cerrar el cuadro de diálogo
                             Positioned(
                               top: 0,
                               right: 0,
@@ -642,15 +625,11 @@ class _ResultScreenState extends State<ResultScreen> {
     return '$startFormatted - $endFormatted';
   }
 
-  // Método para obtener la URL del icono basado en el código del clima
   String _getWeatherIconUrl(String weatherCode) {
-    // Verifica si el código de clima está en el mapa
     if (weatherCodes.containsKey(weatherCode)) {
-      //print(weatherCodes[weatherCode]!["icon"]);
       return weatherCodes[weatherCode]!["icon"] ?? '';
     }
-    // Devuelve una URL vacía si el código no se encuentra
-    //print('paso por aqui we');
+
     return '';
   }
 }

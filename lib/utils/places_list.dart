@@ -9,6 +9,48 @@ class PlacesList {
       "type": "amusement_park"
     },
     {
+      "icon": Icons.museum,
+      "color": Colors.yellow,
+      "name": "Museo",
+      "type": "museum"
+    },
+    {
+      "icon": Icons.castle_rounded,
+      "color": Colors.deepOrangeAccent,
+      "name": "Monumento Histórico",
+      "type": "historical_landmark"
+    },
+    {
+      "icon": Icons.attractions,
+      "color": Colors.tealAccent,
+      "name": "Atracción turística",
+      "type": "tourist_attraction"
+    },
+    {
+      "icon": Icons.park,
+      "color": Colors.green,
+      "name": "Parque",
+      "type": "park"
+    },
+    {
+      "icon": Icons.restaurant,
+      "color": Colors.redAccent,
+      "name": "Restaurante",
+      "type": "restaurant"
+    },
+    {
+      "icon": Icons.restaurant,
+      "color": Colors.redAccent,
+      "name": "Restaurante",
+      "type": "restaurant"
+    },
+    {
+      "icon": Icons.pets,
+      "color": Colors.pinkAccent,
+      "name": "Zoológico",
+      "type": "zoo"
+    },
+    {
       "icon": Icons.water,
       "color": Colors.cyan,
       "name": "Acuario",
@@ -39,12 +81,6 @@ class PlacesList {
       "type": "cafe"
     },
     {
-      "icon": Icons.campaign,
-      "color": Colors.greenAccent,
-      "name": "Camping",
-      "type": "campground"
-    },
-    {
       "icon": Icons.casino,
       "color": Colors.black,
       "name": "Casino",
@@ -57,28 +93,10 @@ class PlacesList {
       "type": "church"
     },
     {
-      "icon": Icons.location_city,
-      "color": Colors.lightBlue,
-      "name": "Ayuntamiento",
-      "type": "city_hall"
-    },
-    {
       "icon": Icons.checkroom,
       "color": Colors.pink,
       "name": "Tienda de ropa",
       "type": "clothing_store"
-    },
-    {
-      "icon": Icons.apartment,
-      "color": Colors.teal,
-      "name": "Embajada",
-      "type": "embassy"
-    },
-    {
-      "icon": Icons.temple_hindu,
-      "color": Colors.amber,
-      "name": "Templo hindú",
-      "type": "hindu_temple"
     },
     {
       "icon": Icons.library_books,
@@ -93,40 +111,16 @@ class PlacesList {
       "type": "lodging"
     },
     {
-      "icon": Icons.mosque,
-      "color": Colors.blueAccent,
-      "name": "Mezquita",
-      "type": "mosque"
-    },
-    {
       "icon": Icons.local_movies,
       "color": Colors.red,
       "name": "Cine",
       "type": "movie_theater"
     },
     {
-      "icon": Icons.museum,
-      "color": Colors.yellow,
-      "name": "Museo",
-      "type": "museum"
-    },
-    {
       "icon": Icons.nightlife,
       "color": Colors.deepPurple,
       "name": "Club nocturno",
       "type": "night_club"
-    },
-    {
-      "icon": Icons.park,
-      "color": Colors.green,
-      "name": "Parque",
-      "type": "park"
-    },
-    {
-      "icon": Icons.restaurant,
-      "color": Colors.redAccent,
-      "name": "Restaurante",
-      "type": "restaurant"
     },
     {
       "icon": Icons.shopping_bag,
@@ -145,12 +139,6 @@ class PlacesList {
       "color": Colors.deepOrangeAccent,
       "name": "Estadio",
       "type": "stadium"
-    },
-    {
-      "icon": Icons.attractions,
-      "color": Colors.tealAccent,
-      "name": "Atracción turística",
-      "type": "tourist_attraction"
     },
     {
       "icon": Icons.train,
@@ -177,22 +165,40 @@ class PlacesList {
       "type": "university"
     },
     {
-      "icon": Icons.pets,
-      "color": Colors.pinkAccent,
-      "name": "Zoológico",
-      "type": "zoo"
-    },
-    {
       "icon": Icons.comment_bank_rounded,
       "color": Colors.teal,
       "name": "Centro cultural",
       "type": "cultural_center"
     },
     {
-      "icon": Icons.castle_rounded,
-      "color": Colors.deepOrangeAccent,
-      "name": "Monumento Histórico",
-      "type": "historical_landmark"
+      "icon": Icons.campaign,
+      "color": Colors.greenAccent,
+      "name": "Camping",
+      "type": "campground"
+    },
+    {
+      "icon": Icons.mosque,
+      "color": Colors.blueAccent,
+      "name": "Mezquita",
+      "type": "mosque"
+    },
+    {
+      "icon": Icons.location_city,
+      "color": Colors.lightBlue,
+      "name": "Ayuntamiento",
+      "type": "city_hall"
+    },
+    {
+      "icon": Icons.apartment,
+      "color": Colors.teal,
+      "name": "Embajada",
+      "type": "embassy"
+    },
+    {
+      "icon": Icons.temple_hindu,
+      "color": Colors.amber,
+      "name": "Templo hindú",
+      "type": "hindu_temple"
     },
   ];
 }

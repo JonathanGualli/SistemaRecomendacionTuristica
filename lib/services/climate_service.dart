@@ -4,7 +4,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class ClimateService {
   static const String baseUrl = 'https://api.tomorrow.io/v4/timelines';
-  static const String apiKey = 'BscDaxFAClp2E1BUuukcBE3Irw2M1km4';
+  static const String apiKey =
+      'BscDaxFAClp2E1BUuukcBE3Irw2M1km4'; //BscDaxFAClp2E1BUuukcBE3Irw2M1km4 X5yekypQOKhQRHogZZ8weAS7B9wRzQIt
   static const String fields =
       'precipitationIntensity,precipitationProbability,temperature,windSpeed,humidity,precipitationType,weatherCode';
   //static const String startTime = '2024-10-16T08:00:00Z';

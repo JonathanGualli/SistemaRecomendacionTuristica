@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:tesis_v2/algoritm/algoritm.dart';
+import 'package:tesis_v2/algoritm/algoritm_function.dart';
 import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
 import 'package:tesis_v2/screens/climate_information_screen.dart';
@@ -37,6 +38,12 @@ class _PoisInformationState extends State<PoisInformation> {
       "art_gallery"; // no importa, no afecta se actualiara luego a los tipos de la lista types.
 
   String jsonResponse = '';
+
+  void updateScreen() {
+    setState(() {
+      places = PreferencesProvider.instance.getPlaces()!;
+    });
+  }
 
   @override
   void initState() {
@@ -77,6 +84,7 @@ class _PoisInformationState extends State<PoisInformation> {
           : Column(
               children: [
                 Expanded(
+                  flex: 4,
                   child: GoogleMap(
                     markers: Set.from(
                         markers), //Se markan visualmente los puntos de interes en el mapa
@@ -103,80 +111,168 @@ class _PoisInformationState extends State<PoisInformation> {
                   ),
                 ),
                 Expanded(
+                  flex: 6,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Lista de Lugares, total lugares: ${places.length}',
+                        'Lugares disponibles: ${places.length}',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueAccent,
+                        ),
                       ),
+                      const SizedBox(height: 10),
                       Expanded(
                         child: ListView.builder(
                           itemCount: places.length,
                           itemBuilder: (context, index) {
-                            return ListTile(
-                              title: Text(places[index].name),
-                              subtitle: Text(
-                                  'Rating: ${places[index].rating.toString()} Type: ${places[index].type.toString()} IsOutdoor: ${places[index].isOutdoor}'),
-                              onTap: () {
-                                // Implementa lo que quieras hacer al hacer tap en un lugar de la lista
-                              },
+                            final place = places[index];
+                            Map<String, dynamic> placeDetails =
+                                getPlaceDetails(place.type);
+                            return Card(
+                              elevation: 3,
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                leading: CircleAvatar(
+                                  radius: 25,
+                                  backgroundColor: placeDetails['color'],
+                                  child: Icon(
+                                    placeDetails[
+                                        "icon"], // Icono basado en el tipo de lugar
+                                    color:
+                                        Colors.white, // Color basado en el tipo
+                                    size: 30,
+                                  ),
+                                ),
+                                trailing: IconButton(
+                                  onPressed: () {
+                                    // Verifica si el sitio es obligatorio
+                                    if (place.isMandatory) {
+                                      // Muestra el diálogo de alerta
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text(
+                                                "Eliminar lugar obligatorio"),
+                                            content: Text(
+                                                "Este lugar fue marcado como obligatorio. ¿Estás seguro que quieres eliminarlo?"),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                child: Text("Cancelar"),
+                                                onPressed: () {
+                                                  Navigator.of(context)
+                                                      .pop(); // Cierra el diálogo
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: Text("Eliminar"),
+                                                onPressed: () {
+                                                  // Elimina el lugar después de confirmar
+                                                  setState(() {
+                                                    places.removeWhere(
+                                                        (placeRemove) =>
+                                                            placeRemove.id ==
+                                                            place.id);
+                                                    markers.removeWhere(
+                                                      (marker) =>
+                                                          marker
+                                                              .markerId.value ==
+                                                          place.name,
+                                                    );
+                                                  });
+                                                  Navigator.of(context)
+                                                      .pop(); // Cierra el diálogo
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    } else {
+                                      // Si el lugar no es obligatorio, lo elimina directamente
+                                      setState(() {
+                                        places.removeWhere((placeRemove) =>
+                                            placeRemove.id == place.id);
+                                        markers.removeWhere(
+                                          (marker) =>
+                                              marker.markerId.value ==
+                                              place.name,
+                                        );
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(
+                                    Icons.cancel,
+                                    color: Colors.red,
+                                    size: 35,
+                                  ),
+                                ),
+                                title: Text(
+                                  place.name,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.star,
+                                            color: Colors.amber, size: 18),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'Rating: ${place.rating}',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Tipo: ${placeDetails["name"]}',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        place.isOutdoor
+                                            ? const Icon(Icons.park,
+                                                size: 18, color: Colors.teal)
+                                            : const Icon(Icons.house,
+                                                size: 18, color: Colors.blue),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          place.isOutdoor
+                                              ? 'Al aire libre'
+                                              : 'Cubierto',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  // Implementa lo que quieras hacer al hacer tap en un lugar de la lista
+                                },
+                              ),
                             );
                           },
                         ),
                       ),
+
                       Row(
                         children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                /* if (ratingController.text.isEmpty) {
-                                  SnackBarService.instance
-                                      .showSnackBar("Ingresa un valor", false);
-                                } else {
-                                  setState(() {
-                                    double inputRating =
-                                        double.parse(ratingController.text);
-                                    places = places.where((place) {
-                                      // ignore: unnecessary_null_comparison
-                                      if (place.rating == null) {
-                                        return false;
-                                      }
-                                      double? placeRating =
-                                          double.tryParse(place.rating);
-                                      if (placeRating == null) {
-                                        return false;
-                                      }
-                                      return placeRating >= inputRating;
-                                    }).toList();
-                                  });
-                                } */
-                                print("prueba de datos:");
-                                print(PreferencesProvider.instance
-                                    .getInitialLocation());
-                                print(PreferencesProvider.instance.getDate());
-                                print(
-                                    PreferencesProvider.instance.getEndTime());
-                                print(PreferencesProvider.instance
-                                    .getPreferences());
-                                print(PreferencesProvider.instance.getRadius());
-                                print(PreferencesProvider.instance
-                                    .getSelectedCity());
-
-                                print(PreferencesProvider.instance
-                                    .getStartTIme());
-                                printPlaceData(
-                                    PreferencesProvider.instance.getPlaces()!);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.purple,
-                              ),
-                              child: const Text('Comprobar datos'),
-                            ),
-                          ),
                           /*  Expanded(
                             child: Padding(
                               padding:
@@ -194,16 +290,20 @@ class _PoisInformationState extends State<PoisInformation> {
                             ),
                           ) */
                           Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                NavigationService.instance
-                                    .navigatePushName(Algoritm.routeName);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.purple,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  /* NavigationService.instance
+                                      .navigatePushName(Algoritm.routeName); */
+                                  runAlgoritm();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.purple,
+                                ),
+                                child: const Text('Generar itinerario'),
                               ),
-                              child: const Text('Generar itinerario'),
                             ),
                           ),
                         ],
@@ -328,6 +428,40 @@ class _PoisInformationState extends State<PoisInformation> {
         // ignore: prefer_collection_literals
         Set(); //Conjunto para almacenar nombres de lugares únicos
 
+    if (PreferencesProvider.instance.getSpecificPoiPreferences() != null) {
+      List<PlaceData> specificPlaces =
+          PreferencesProvider.instance.getSpecificPoiPreferences()!;
+      allMarkers.addAll(
+        specificPlaces.map(
+          (place) {
+            //Verificamos si un lugar ya ha sido agregado
+            if (!addedPlaceNames.contains(place.name)) {
+              //Agregar a la lista de lugares y al conjunto de nombres
+              allPLaces.add(place);
+              addedPlaceNames.add(place.name);
+
+              if (place.name == 'Museo del Louvre' &&
+                  !addedPlaceNames.contains('Louvre Museum')) {
+                addedPlaceNames.add('Louvre Museum');
+              }
+              if (place.name == 'Louvre Museum' &&
+                  !addedPlaceNames.contains('Museo del Louvre')) {
+                addedPlaceNames.add('Museo del Louvre');
+              }
+            }
+            return Marker(
+              markerId: MarkerId(place.name),
+              position: place.coordinates,
+              infoWindow: InfoWindow(
+                title: place.name,
+                snippet: 'Rating: ${place.rating}',
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     Future<void> fetchTypes(List<String> types) async {
       for (String type in types) {
         setState(() {
@@ -390,11 +524,21 @@ class _PoisInformationState extends State<PoisInformation> {
                 isOutdoor: PlaceTypeClassifier.isOutdoor(type),
                 isMandatory: false,
                 urlImages: List.empty(growable: true),
+                googleMapsUri: '',
               );
 
               //Agregar a la lista de lugares y al conjunto de nombres
               allPLaces.add(newPlace);
               addedPlaceNames.add(name);
+
+              if (name == 'Museo del Louvre' &&
+                  !addedPlaceNames.contains('Louvre Museum')) {
+                addedPlaceNames.add('Louvre Museum');
+              }
+              if (name == 'Louvre Museum' &&
+                  !addedPlaceNames.contains('Museo del Louvre')) {
+                addedPlaceNames.add('Museo del Louvre');
+              }
             }
 
             return Marker(
@@ -410,7 +554,7 @@ class _PoisInformationState extends State<PoisInformation> {
         }
         await Future.delayed(const Duration(seconds: 2));
       }
-      if (PreferencesProvider.instance.getSpecificPoiPreferences() != null) {
+/*       if (PreferencesProvider.instance.getSpecificPoiPreferences() != null) {
         List<PlaceData> specificPlaces =
             PreferencesProvider.instance.getSpecificPoiPreferences()!;
         allMarkers.addAll(
@@ -433,7 +577,7 @@ class _PoisInformationState extends State<PoisInformation> {
             },
           ),
         );
-      }
+      } */
 
       setState(() {
         markers = allMarkers;
