@@ -263,7 +263,7 @@ class _PreferencesSelectionScreenState
                                 .toList();
 
                             if (seleccionados.isNotEmpty &&
-                                seleccionados.length >= 3) {
+                                seleccionados.length >= 1) {
                               //_showBottomSheet();
                               DBService.instance
                                   .updatePreferencesInDB(seleccionados)
@@ -284,7 +284,7 @@ class _PreferencesSelectionScreenState
                               );
                             } else {
                               SnackBarService.instance.showSnackBar(
-                                  "Por favor, selecciona al menos tres lugares",
+                                  "Por favor, selecciona al menos tres intereses",
                                   false);
                             }
                             print(PreferencesProvider.instance.initialLocation);

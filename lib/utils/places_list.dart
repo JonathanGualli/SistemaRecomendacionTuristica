@@ -39,12 +39,6 @@ class PlacesList {
       "type": "restaurant"
     },
     {
-      "icon": Icons.restaurant,
-      "color": Colors.redAccent,
-      "name": "Restaurante",
-      "type": "restaurant"
-    },
-    {
       "icon": Icons.pets,
       "color": Colors.pinkAccent,
       "name": "Zoológico",

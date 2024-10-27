@@ -183,3 +183,5 @@ I/flutter (19296): La mejor ruta encontrada con fitness: 320.828323706309, [star
 
 
 
+tener en cuenta este tipo de sitios 
+{id: ChIJ-w6YGj1u5kcR9XoTLMtIUCc, name: Pizzeria Popolare, coordinates: {latitude: 48.8681267, longitude: 2.3433135}, rating: 4.7, type: restaurant, regularOpeningHours: {weekdayDescriptions: [Monday: 11:45 AM – 2:15 PM, 6:30 – 10:30 PM, Tuesday: 11:45 AM – 2:15 PM, 6:30 – 10:30 PM, Wednesday: 11:45 AM – 2:15 PM, 6:30 – 10:30 PM, Thursday: 11:45 AM – 2:15 PM, 6:30 – 10:45 PM, Friday: 11:45 AM – 2:15 PM, 6:30 – 10:45 PM, Saturday: 12:00 – 3:15 PM, 6:30 – 10:45 PM, Sunday: 12:00 – 3:15 PM, 6:30 – 10:30 PM]}, isOutdoor: false, isMandatory: false, googleMapsUri: https://maps.google.com/?cid=2832844203071077109}

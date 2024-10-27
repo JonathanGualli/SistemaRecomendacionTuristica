@@ -72,7 +72,7 @@ class _AlgoritmState extends State<Algoritm> {
     for (var place in places) {
       if (!place.isMandatory) {
         if (place.rating != 'null') {
-          if (double.parse(place.rating) <= 4) {
+          if (double.parse(place.rating) <= 3.5) {
             // Agrega el lugar a la lista de elementos a eliminar
             if (place.isMandatory != true) {
               placesToRemove.add(place);
@@ -108,6 +108,7 @@ class _AlgoritmState extends State<Algoritm> {
         isMandatory: false,
         urlImages: List.empty(growable: true),
         googleMapsUri: '',
+        openingPeriods: List.empty(),
       ),
     );
   }
@@ -144,7 +145,7 @@ class _AlgoritmState extends State<Algoritm> {
         'code': weatherCode,
       });
 
-      isOutdoorIntervals.add(maxPrecipitationProbability <= 25);
+      isOutdoorIntervals.add(maxPrecipitationProbability <= 30);
       i += 2;
     }
     PreferencesProvider.instance.groupedData = groupedData;
@@ -352,7 +353,7 @@ class _AlgoritmState extends State<Algoritm> {
 
       // Agregar a isOutdoorIntervals según la probabilidad de precipitación
       isOutdoorIntervals.add(maxPrecipitationProbability <=
-          25); // True si es 25 o menos, false si es más
+          30); // True si es 25 o menos, false si es más
 
       // Avanza al siguiente grupo
       i += 2; // Avanza para el siguiente bloque de 1.5 horas
@@ -517,11 +518,11 @@ class _AlgoritmState extends State<Algoritm> {
             penalty += 25.0;
           }
         }
-      }
 
-      if (!places[position1].isMandatory) {
-        penalty += 50;
-        //print('Penalizacion muy grave');
+        if (!places[position1].isMandatory) {
+          penalty += 50;
+          //print('Penalizacion muy grave');
+        }
       }
     }
 
@@ -841,7 +842,7 @@ class _AlgoritmState extends State<Algoritm> {
     return distanceMatrix;
   }
 
-  // Función para generar la matriz de distancias
+/*   // Función para generar la matriz de distancias
   List<List<double>> generateDistanceMatrix2(
       List<PlaceData> places, LatLng startingPoint) {
     // Crear una nueva lista que incluya el punto de partida
@@ -882,7 +883,7 @@ class _AlgoritmState extends State<Algoritm> {
       }
     }
     return distanceMatrix;
-  }
+  } */
 
   List<PlaceData> filterAndOrderPlaces(List<PlaceData> places, int limit) {
     // Asegura que el startingPoint siempre esté primero en la lista

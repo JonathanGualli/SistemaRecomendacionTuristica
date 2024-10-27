@@ -251,7 +251,7 @@ class _ResultScreenState extends State<ResultScreen> {
             flex: 6,
             child: Column(
               children: [
-                Spacer(
+                const Spacer(
                   flex: 1,
                 ),
                 Expanded(
@@ -340,8 +340,9 @@ class _ResultScreenState extends State<ResultScreen> {
                             child: GestureDetector(
                               onTap: () {
                                 _moveCameraToPlace(place);
-
+                                print(place.id);
                                 print(place.googleMapsUri);
+                                print(place.isMandatory);
                               },
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
@@ -362,7 +363,11 @@ class _ResultScreenState extends State<ResultScreen> {
                                               place.urlImages.first),
                                           fit: BoxFit.cover,
                                         )
-                                      : null,
+                                      : const DecorationImage(
+                                          image: AssetImage(
+                                              'assets/colorImage.jpg'),
+                                          fit: BoxFit.cover,
+                                        ),
                                 ),
                                 width: 160,
                                 child: Stack(

@@ -31,7 +31,7 @@ void runAlgoritm() {
   for (var place in places) {
     if (!place.isMandatory) {
       if (place.rating != 'null') {
-        if (double.parse(place.rating) <= 4) {
+        if (double.parse(place.rating) <= 3.5) {
           if (place.isMandatory != true) {
             placesToRemove.add(place);
           }
@@ -65,6 +65,7 @@ void runAlgoritm() {
       isMandatory: false,
       urlImages: List.empty(growable: true),
       googleMapsUri: '',
+      openingPeriods: List.empty(),
     ),
   );
 
@@ -114,10 +115,9 @@ void runAlgoritm() {
             penalty += 25.0;
           }
         }
-      }
-
-      if (!places[position1].isMandatory) {
-        penalty += 50;
+        if (!places[position1].isMandatory) {
+          penalty += 50;
+        }
       }
     }
 
@@ -327,7 +327,7 @@ void runAlgoritm() {
         'code': weatherCode,
       });
 
-      isOutdoorIntervals.add(maxPrecipitationProbability <= 25);
+      isOutdoorIntervals.add(maxPrecipitationProbability <= 30);
       i += 2;
     }
     PreferencesProvider.instance.groupedData = groupedData;

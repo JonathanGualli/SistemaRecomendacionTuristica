@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:tesis_v2/models/opening_period_model.dart';
 import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/auth_provider.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
@@ -377,6 +378,43 @@ class _SpecificPoiSelectionScreenState
                                                         (e) => e.toString()) ??
                                                 [])
                                             : <String>[];
+                                    // Extrae los períodos de apertura en una lista de objetos OpeningPeriod
+                                    final List<OpeningPeriod> openingPeriods =
+                                        (regularOpeningHours?['periods']
+                                                    as List<dynamic>?)
+                                                ?.map((period) {
+                                                  final open = period['open'];
+                                                  final close = period['close'];
+
+                                                  // Verificar que 'open' y 'close' no sean nulos antes de crear el objeto OpeningPeriod
+                                                  if (open != null &&
+                                                      close != null) {
+                                                    return OpeningPeriod(
+                                                      openDay: open['day'] ??
+                                                          0, // Usa un valor por defecto en caso de que 'day' sea null
+                                                      openHour:
+                                                          open['hour'] ?? 0,
+                                                      openMinute:
+                                                          open['minute'] ?? 0,
+                                                      closeDay:
+                                                          close['day'] ?? 0,
+                                                      closeHour:
+                                                          close['hour'] ?? 0,
+                                                      closeMinute:
+                                                          close['minute'] ?? 0,
+                                                    );
+                                                  } else {
+                                                    // Si no hay datos de apertura/cierre, retorna null
+                                                    return null;
+                                                  }
+                                                })
+                                                .where((period) =>
+                                                    period !=
+                                                    null) // Filtra los elementos nulos
+                                                .cast<
+                                                    OpeningPeriod>() // Convierte el Iterable a List<OpeningPeriod>
+                                                .toList() ??
+                                            [];
                                     final type =
                                         listForPlaces[index]['primaryType'];
                                     places.add(
@@ -398,7 +436,9 @@ class _SpecificPoiSelectionScreenState
                                             PlaceTypeClassifier.isOutdoor(type),
                                         isMandatory: true,
                                         urlImages: List.empty(growable: true),
-                                        googleMapsUri: '',
+                                        googleMapsUri: listForPlaces[index]
+                                            ['googleMapsUri'],
+                                        openingPeriods: openingPeriods,
                                       ),
                                     );
                                   }
@@ -448,7 +488,7 @@ class _SpecificPoiSelectionScreenState
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': googlePlacesApiKey,
         'X-Goog-FieldMask':
-            'places.displayName,places.formattedAddress,places.id,places.location,places.rating,places.primaryType,places.regularOpeningHours'
+            'places.displayName,places.formattedAddress,places.id,places.location,places.rating,places.primaryType,places.regularOpeningHours,places.googleMapsUri'
       },
       body: json.encode({
         'textQuery': input,

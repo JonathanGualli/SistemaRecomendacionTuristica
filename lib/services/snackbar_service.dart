@@ -12,6 +12,11 @@ class SnackBarService {
   }
 
   void showSnackBar(String message, bool success) {
+    if (_buildContext == null) return;
+
+    // Cancelar el SnackBar actual si ya hay uno visible
+    ScaffoldMessenger.of(_buildContext!).clearSnackBars();
+
     ScaffoldMessenger.of(_buildContext!).showSnackBar(
       SnackBar(
           duration: const Duration(seconds: 3),

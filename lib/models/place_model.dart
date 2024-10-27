@@ -92,6 +92,7 @@ class PlaceData {
 */
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:tesis_v2/models/opening_period_model.dart';
 
 class PlaceData {
   late final String id; // Identificador del lugar
@@ -105,6 +106,7 @@ class PlaceData {
   late final bool isMandatory;
   late final List<String> urlImages;
   late final String googleMapsUri;
+  late final List<OpeningPeriod> openingPeriods;
 
   PlaceData({
     required this.id,
@@ -117,13 +119,14 @@ class PlaceData {
     required this.isMandatory,
     required this.urlImages,
     required this.googleMapsUri,
+    required this.openingPeriods,
   });
 
 /*   setImages(List<String> images) {
     urlImages.addAll(images);
   }
  */
-  factory PlaceData.fromJson(Map<String, dynamic> json) {
+/*   factory PlaceData.fromJson(Map<String, dynamic> json) {
     // Determina si el lugar es al aire libre basado en el tipo
     const outdoorTypes = ['park', 'beach', 'zoo', 'garden'];
     final type = json['type'];
@@ -142,8 +145,9 @@ class PlaceData {
       isMandatory: json['isMandatory'],
       urlImages: List.empty(growable: true),
       googleMapsUri: '',
+      openingPeriods: 
     );
-  }
+  } */
 
 /*   setGoogleMapsUri(String googleMaps) {
     googleMapsUri = googleMaps;
@@ -164,6 +168,8 @@ class PlaceData {
       },
       'isOutdoor': isOutdoor,
       'isMandatory': isMandatory,
+      'googleMapsUri': googleMapsUri,
+      'openingPeriods': openingPeriods.toString(),
     };
   }
 }

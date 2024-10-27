@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:tesis_v2/algoritm/algoritm.dart';
-import 'package:tesis_v2/algoritm/algoritm_function.dart';
+import 'package:tesis_v2/models/opening_period_model.dart';
 import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
 import 'package:tesis_v2/screens/climate_information_screen.dart';
@@ -157,46 +157,8 @@ class _PoisInformationState extends State<PoisInformation> {
                                     // Verifica si el sitio es obligatorio
                                     if (place.isMandatory) {
                                       // Muestra el diálogo de alerta
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text(
-                                                "Eliminar lugar obligatorio"),
-                                            content: Text(
-                                                "Este lugar fue marcado como obligatorio. ¿Estás seguro que quieres eliminarlo?"),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child: Text("Cancelar"),
-                                                onPressed: () {
-                                                  Navigator.of(context)
-                                                      .pop(); // Cierra el diálogo
-                                                },
-                                              ),
-                                              TextButton(
-                                                child: Text("Eliminar"),
-                                                onPressed: () {
-                                                  // Elimina el lugar después de confirmar
-                                                  setState(() {
-                                                    places.removeWhere(
-                                                        (placeRemove) =>
-                                                            placeRemove.id ==
-                                                            place.id);
-                                                    markers.removeWhere(
-                                                      (marker) =>
-                                                          marker
-                                                              .markerId.value ==
-                                                          place.name,
-                                                    );
-                                                  });
-                                                  Navigator.of(context)
-                                                      .pop(); // Cierra el diálogo
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
+                                      showDIalogRemoveMandatoryPlace(
+                                          context, place);
                                     } else {
                                       // Si el lugar no es obligatorio, lo elimina directamente
                                       setState(() {
@@ -260,10 +222,11 @@ class _PoisInformationState extends State<PoisInformation> {
                                         ),
                                       ],
                                     ),
+                                    //Text(place.weekdayDescriptions.toString()),
                                   ],
                                 ),
                                 onTap: () {
-                                  // Implementa lo que quieras hacer al hacer tap en un lugar de la lista
+                                  print(place.toJson());
                                 },
                               ),
                             );
@@ -294,9 +257,15 @@ class _PoisInformationState extends State<PoisInformation> {
                               padding: const EdgeInsets.all(10.0),
                               child: ElevatedButton(
                                 onPressed: () {
-                                  /* NavigationService.instance
-                                      .navigatePushName(Algoritm.routeName); */
-                                  runAlgoritm();
+                                  NavigationService.instance
+                                      .navigatePushName(Algoritm.routeName);
+                                  //runAlgoritm();
+/*                                   print(initialLocation.latitude);
+
+                                  print(initialLocation.longitude);
+                                  print(radius);
+                                  DateTime prueba = DateTime(2024, 10, 27);
+                                  print((prueba.weekday - 1)); */
                                 },
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor: Colors.white,
@@ -314,6 +283,42 @@ class _PoisInformationState extends State<PoisInformation> {
                 ),
               ],
             ),
+    );
+  }
+
+  Future<dynamic> showDIalogRemoveMandatoryPlace(
+      BuildContext context, PlaceData place) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Eliminar lugar obligatorio"),
+          content: const Text(
+              "Este lugar fue marcado como obligatorio. ¿Estás seguro que quieres eliminarlo?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Cancelar"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo
+              },
+            ),
+            TextButton(
+              child: const Text("Eliminar"),
+              onPressed: () {
+                // Elimina el lugar después de confirmar
+                setState(() {
+                  places
+                      .removeWhere((placeRemove) => placeRemove.id == place.id);
+                  markers.removeWhere(
+                    (marker) => marker.markerId.value == place.name,
+                  );
+                });
+                Navigator.of(context).pop(); // Cierra el diálogo
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -486,69 +491,108 @@ class _PoisInformationState extends State<PoisInformation> {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
           'X-Goog-FieldMask':
-              'places.displayName,places.location,places.rating,places.id,places.regularOpeningHours'
+              'places.displayName,places.location,places.rating,places.id,places.regularOpeningHours,places.googleMapsUri'
         };
         final response = await http.post(
           Uri.parse(url),
           headers: headers,
           body: body,
         );
-
+/* 
+        debugPrint(response.statusCode.toString());
+        debugPrint(response.body);
+        print(response.body.isEmpty); */
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
 
-          final List places = data['places'];
+          // Verifica que 'places' no sea null y no esté vacío
+          if (data['places'] != null && data['places'].isNotEmpty) {
+            final List places = data['places'];
 
-          allMarkers.addAll(places.map((place) {
-            final lat = place['location']['latitude'];
-            final lng = place['location']['longitude'];
-            final name = place['displayName']['text'];
-            // Verifica si regularOpeningHours es null
-            final regularOpeningHours = place['regularOpeningHours'];
-            final weekdayDescriptions = regularOpeningHours != null
-                ? List<String>.from((regularOpeningHours['weekdayDescriptions']
-                            as List<dynamic>?)
-                        ?.map((e) => e.toString()) ??
-                    [])
-                : <String>[];
-            //Verificamos si un lugar ya ha sido agregado
-            if (!addedPlaceNames.contains(name)) {
-              //Creaer un objeto place
-              final newPlace = PlaceData(
-                id: place['id'],
-                name: name,
-                coordinates: LatLng(lat, lng),
-                rating: place['rating'].toString(),
-                type: type,
-                weekdayDescriptions: weekdayDescriptions,
-                isOutdoor: PlaceTypeClassifier.isOutdoor(type),
-                isMandatory: false,
-                urlImages: List.empty(growable: true),
-                googleMapsUri: '',
+            allMarkers.addAll(places.map((place) {
+              final lat = place['location']['latitude'];
+              final lng = place['location']['longitude'];
+              final name = place['displayName']['text'];
+              final googleMapsUri = place['googleMapsUri'] ?? '';
+              // Verifica si regularOpeningHours es null
+              final regularOpeningHours = place['regularOpeningHours'];
+              final weekdayDescriptions = regularOpeningHours != null
+                  ? List<String>.from(
+                      (regularOpeningHours['weekdayDescriptions']
+                                  as List<dynamic>?)
+                              ?.map((e) => e.toString()) ??
+                          [])
+                  : <String>[];
+
+              final List<OpeningPeriod> openingPeriods = (regularOpeningHours?[
+                          'periods'] as List<dynamic>?)
+                      ?.map((period) {
+                        final open = period['open'];
+                        final close = period['close'];
+
+                        // Verificar que 'open' y 'close' no sean nulos antes de crear el objeto OpeningPeriod
+                        if (open != null && close != null) {
+                          return OpeningPeriod(
+                            openDay: open['day'] ??
+                                0, // Usa un valor por defecto en caso de que 'day' sea null
+                            openHour: open['hour'] ?? 0,
+                            openMinute: open['minute'] ?? 0,
+                            closeDay: close['day'] ?? 0,
+                            closeHour: close['hour'] ?? 0,
+                            closeMinute: close['minute'] ?? 0,
+                          );
+                        } else {
+                          // Si no hay datos de apertura/cierre, retorna null
+                          return null;
+                        }
+                      })
+                      .where((period) =>
+                          period != null) // Filtra los elementos nulos
+                      .cast<
+                          OpeningPeriod>() // Convierte el Iterable a List<OpeningPeriod>
+                      .toList() ??
+                  [];
+
+              //Verificamos si un lugar ya ha sido agregado
+              if (!addedPlaceNames.contains(name)) {
+                //Creaer un objeto place
+                final newPlace = PlaceData(
+                  id: place['id'],
+                  name: name,
+                  coordinates: LatLng(lat, lng),
+                  rating: place['rating'].toString(),
+                  type: type,
+                  weekdayDescriptions: weekdayDescriptions,
+                  isOutdoor: PlaceTypeClassifier.isOutdoor(type),
+                  isMandatory: false,
+                  urlImages: List.empty(growable: true),
+                  googleMapsUri: googleMapsUri,
+                  openingPeriods: openingPeriods,
+                );
+
+                //Agregar a la lista de lugares y al conjunto de nombres
+                allPLaces.add(newPlace);
+                addedPlaceNames.add(name);
+
+                if (name == 'Museo del Louvre' &&
+                    !addedPlaceNames.contains('Louvre Museum')) {
+                  addedPlaceNames.add('Louvre Museum');
+                }
+                if (name == 'Louvre Museum' &&
+                    !addedPlaceNames.contains('Museo del Louvre')) {
+                  addedPlaceNames.add('Museo del Louvre');
+                }
+              }
+
+              return Marker(
+                markerId: MarkerId(name),
+                position: LatLng(lat, lng),
+                infoWindow: InfoWindow(title: name),
               );
-
-              //Agregar a la lista de lugares y al conjunto de nombres
-              allPLaces.add(newPlace);
-              addedPlaceNames.add(name);
-
-              if (name == 'Museo del Louvre' &&
-                  !addedPlaceNames.contains('Louvre Museum')) {
-                addedPlaceNames.add('Louvre Museum');
-              }
-              if (name == 'Louvre Museum' &&
-                  !addedPlaceNames.contains('Museo del Louvre')) {
-                addedPlaceNames.add('Museo del Louvre');
-              }
-            }
-
-            return Marker(
-              markerId: MarkerId(name),
-              position: LatLng(lat, lng),
-              infoWindow: InfoWindow(title: name),
-            );
-          }).toList());
-          //Agregar la respuesta JSON al acumulador
-          allJsonResponse += '${response.body}\n\n';
+            }).toList());
+            //Agregar la respuesta JSON al acumulador
+            allJsonResponse += '${response.body}\n\n';
+          }
         } else {
           throw Exception('Failed to load places');
         }
