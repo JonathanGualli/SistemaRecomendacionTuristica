@@ -300,7 +300,7 @@ class _AlgoritmState extends State<Algoritm> {
         row +=
             '${distanceMatrix[i][j].toStringAsFixed(2)}\t'; // Ajusta la precisión como prefieras
       }
-      //debugPrint(row);
+      debugPrint(row);
     }
     //places.forEach((element) => print(element.name));
     runGeneticAlgorithm(
@@ -316,7 +316,7 @@ class _AlgoritmState extends State<Algoritm> {
     int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
 
     for (int i = 0; i < climateDataList!.length; i += 1) {
-      print(i);
+      //print(i);
       if (i + interval > climateDataList!.length)
         break; // Evita exceder la longitud
 
@@ -678,10 +678,10 @@ class _AlgoritmState extends State<Algoritm> {
       int limit,
       Map<String, int> nameToIndex) {
     List<String> names = getNamesOfPlaces(places);
-    List<String> namesInDoor = getNamesOfPlacesInDoor(places);
+    //List<String> namesInDoor = getNamesOfPlacesInDoor(places);
 
-    print(names.length);
-    print(namesInDoor.length);
+    //print(names.length);
+    //print(namesInDoor.length);
 
 /*     List<PlaceData> newPlaces = filterAndOrderPlaces(places, limit);
     places = newPlaces; */

@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Text titulo() {
     return const Text(
-      "Sistema de recomendación turística",
+      "Sistema de recomendación turística\nCentrado en el clima",
       style: TextStyle(
           fontSize: 25, color: Colors.purple, fontWeight: FontWeight.bold),
     );

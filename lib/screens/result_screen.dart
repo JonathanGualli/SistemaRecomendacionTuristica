@@ -11,6 +11,7 @@ import 'package:tesis_v2/utils/climate_codes.dart';
 import 'dart:convert';
 
 import 'package:tesis_v2/utils/places_list.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -469,6 +470,27 @@ class _ResultScreenState extends State<ResultScreen> {
                                           size: 30,
                                         ),
                                       ),
+                                    ),
+                                    Positioned(
+                                      left: 0,
+                                      child: IconButton(
+                                        onPressed: () async {
+                                          final Uri googleMapsUri =
+                                              Uri.parse(place.googleMapsUri);
+                                          if (await canLaunchUrl(
+                                              googleMapsUri)) {
+                                            await launchUrl(googleMapsUri);
+                                          } else {
+                                            print(
+                                                'No se pudo abrir el enlace a Google Maps');
+                                          }
+                                        },
+                                        icon: const Icon(
+                                          Icons.location_on,
+                                          color: Colors.pinkAccent,
+                                          size: 30,
+                                        ),
+                                      ),
                                     )
                                   ],
                                 ),
@@ -590,7 +612,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
                 const SizedBox(height: 10),
                 // Botones de navegación izquierda y derecha
-                Row(
+                /* Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
@@ -609,7 +631,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       onPressed: () {},
                     ),
                   ],
-                ),
+                ), */
               ],
             ),
           ),

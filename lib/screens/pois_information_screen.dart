@@ -440,19 +440,19 @@ class _PoisInformationState extends State<PoisInformation> {
         specificPlaces.map(
           (place) {
             //Verificamos si un lugar ya ha sido agregado
-            if (!addedPlaceNames.contains(place.name)) {
+            if (!addedPlaceNames.contains(place.id)) {
               //Agregar a la lista de lugares y al conjunto de nombres
               allPLaces.add(place);
-              addedPlaceNames.add(place.name);
+              addedPlaceNames.add(place.id);
 
-              if (place.name == 'Museo del Louvre' &&
+              /*  if (place.name == 'Museo del Louvre' &&
                   !addedPlaceNames.contains('Louvre Museum')) {
                 addedPlaceNames.add('Louvre Museum');
               }
               if (place.name == 'Louvre Museum' &&
                   !addedPlaceNames.contains('Museo del Louvre')) {
                 addedPlaceNames.add('Museo del Louvre');
-              }
+              } */
             }
             return Marker(
               markerId: MarkerId(place.name),
@@ -554,7 +554,7 @@ class _PoisInformationState extends State<PoisInformation> {
                   [];
 
               //Verificamos si un lugar ya ha sido agregado
-              if (!addedPlaceNames.contains(name)) {
+              if (!addedPlaceNames.contains(place['id'])) {
                 //Creaer un objeto place
                 final newPlace = PlaceData(
                   id: place['id'],
@@ -572,16 +572,16 @@ class _PoisInformationState extends State<PoisInformation> {
 
                 //Agregar a la lista de lugares y al conjunto de nombres
                 allPLaces.add(newPlace);
-                addedPlaceNames.add(name);
+                addedPlaceNames.add(place['id']);
 
-                if (name == 'Museo del Louvre' &&
+                /*  if (name == 'Museo del Louvre' &&
                     !addedPlaceNames.contains('Louvre Museum')) {
                   addedPlaceNames.add('Louvre Museum');
                 }
                 if (name == 'Louvre Museum' &&
                     !addedPlaceNames.contains('Museo del Louvre')) {
                   addedPlaceNames.add('Museo del Louvre');
-                }
+                } */
               }
 
               return Marker(
