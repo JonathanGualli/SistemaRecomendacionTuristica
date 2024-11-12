@@ -180,8 +180,12 @@ class _AlgoritmState extends State<Algoritm> {
       }
     }
 
-    runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
+/*     runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
         groupedData.length, nameToIndex);
+ */
+
+    runGeneticAlgorithm(
+        600, 250, distanceMatrix, timeMatrix, places, nameToIndex);
 
     //showResultFunction();
     print(bestRouteAll);
@@ -255,6 +259,42 @@ class _AlgoritmState extends State<Algoritm> {
               showResultFunction();
             },
             child: Text("Ver resultado final "),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              /* climateDataList!.forEach(
+                (element) {
+                  print(element);
+                },
+              );
+              print(climateDataList!.length); */
+              String dateStart = '2024-11-12T08:00:00.000Z';
+
+              String dateEnd = '2024-11-12T10:30:00.000Z';
+
+              print(calculateTotalHours(dateStart, dateEnd));
+            },
+            child: Text("MOSTRAR COSAS"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              int limit = 0;
+              if ((climateDataList!.length - 1) % 3 == 0) {
+                limit = ((climateDataList!.length - 1) ~/ 3) - 1;
+              } else {
+                limit = (climateDataList!.length - 1) ~/ 3;
+              }
+              List<String> names = getNamesOfPlaces(places);
+              List<List<String>> population =
+                  generateInitialPopulationMain(5, names, limit);
+              population.forEach(
+                (element) {
+                  print("longitud ${element.length}");
+                  print(element);
+                },
+              );
+            },
+            child: Text("Poblacion inicial"),
           ),
         ],
       ),
@@ -345,8 +385,8 @@ class _AlgoritmState extends State<Algoritm> {
     }
 
     //places.forEach((element) => print(element.name));
-    runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
-        groupedData.length, nameToIndex);
+/*     runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
+        groupedData.length, nameToIndex); */
 
     //PROBANDO EL METODO
     //generateInitialPopulationMain(5, getNamesOfPlaces(places));
@@ -733,7 +773,7 @@ class _AlgoritmState extends State<Algoritm> {
       List<List<double>> distanceMatrix,
       List<List<double>> timeMatrix,
       List<PlaceData> places,
-      int limit,
+      //int limit,
       Map<String, int> nameToIndex) {
     List<String> names = getNamesOfPlaces(places);
     //List<String> namesInDoor = getNamesOfPlacesInDoor(places);
@@ -743,6 +783,14 @@ class _AlgoritmState extends State<Algoritm> {
 
 /*     List<PlaceData> newPlaces = filterAndOrderPlaces(places, limit);
     places = newPlaces; */
+
+    int limit = 0;
+
+    if ((climateDataList!.length - 1) % 3 == 0) {
+      limit = ((climateDataList!.length - 1) ~/ 3) - 1;
+    } else {
+      limit = (climateDataList!.length - 1) ~/ 3;
+    }
 
     List<List<String>> population =
         generateInitialPopulationMain(populationSize, names, limit);
@@ -1003,5 +1051,20 @@ class _AlgoritmState extends State<Algoritm> {
     sortedPlaces.insert(0, startingPoint);
 
     return sortedPlaces;
+  }
+
+  double calculateTotalHours(String dateStart, String dateEnd) {
+    // Convertir las cadenas a DateTime
+    DateTime startDate = DateTime.parse(dateStart);
+    DateTime endDate = DateTime.parse(dateEnd);
+
+    // Calcular la diferencia
+    Duration difference = endDate.difference(startDate);
+
+    // Convertir la diferencia a horas con decimales
+    double totalHours =
+        difference.inHours.toDouble() + (difference.inMinutes % 60) / 60;
+
+    return totalHours;
   }
 }

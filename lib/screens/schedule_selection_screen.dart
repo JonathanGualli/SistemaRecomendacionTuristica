@@ -176,14 +176,52 @@ class _ScheduleSelectionScreenState extends State<ScheduleSelectionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     datePiker(),
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 10, top: 10),
-                      child: Text(
-                        'Hora del itinerario:',
-                        style: TextStyle(
-                          fontSize: 23,
-                          color: Colores.azul,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10, top: 10),
+                      child: Row(
+                        children: [
+                          const Text(
+                            'Hora del itinerario:',
+                            style: TextStyle(
+                              fontSize: 23,
+                              color: Colores.azul,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () {
+                              // Mostrar el diálogo informativo
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text(
+                                        'Información sobre los intervalos de tiempo'),
+                                    content: const Text(
+                                      'Para mayor facilidad, se trabajará solo con intervalos de 30 minutos. '
+                                      'Esto significa que no se permiten minutos como 23, 14, etc. '
+                                      'Solo puedes elegir 00, 30, 60, etc. para facilitar la planificación del itinerario.',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Cerrar'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.help_outline,
+                              color: Colores.morado,
+                              size: 30,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     selectTime(context, 'start'),
@@ -444,12 +482,35 @@ class _ScheduleSelectionScreenState extends State<ScheduleSelectionScreen> {
           : const TimeOfDay(hour: 20, minute: 0),
       initialEntryMode: TimePickerEntryMode.input,
     );
+
     if (picked != null && picked != startTime) {
+      int roundedMinute;
+      int newHour = picked.hour;
+
+      // Lógica para redondear los minutos
+      if (picked.minute >= 45) {
+        // Si los minutos son >= 45, se sube la hora a la siguiente
+        roundedMinute = 0;
+        newHour = (picked.hour + 1) %
+            24; // Incrementa la hora y asegura que no se pase de 23
+      } else if (picked.minute >= 30) {
+        // Si los minutos son >= 30 pero < 45, se ajusta a x:30
+        roundedMinute = 30;
+      } else if (picked.minute >= 15) {
+        // Si los minutos son >= 15 pero < 30, se ajusta a x:30
+        roundedMinute = 30;
+      } else {
+        // Si los minutos son < 15, se ajusta a x:00
+        roundedMinute = 0;
+      }
+
+      TimeOfDay roundedTime = TimeOfDay(hour: newHour, minute: roundedMinute);
+
       setState(() {
         if (type == 'start') {
-          startTime = picked;
+          startTime = roundedTime;
         } else {
-          endTime = picked;
+          endTime = roundedTime;
         }
       });
     }
