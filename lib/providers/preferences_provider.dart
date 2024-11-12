@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tesis_v2/models/place_model.dart';
@@ -16,6 +18,8 @@ class PreferencesProvider extends ChangeNotifier {
   List<PlaceData>? _specificPoiSelected; // Puntos de interés específicos
   List<PlaceData>? _places; // Totos los POI
   List<PlaceData> _resultPlaces = List.empty(growable: true); // Resultado final
+  List<double> _timeResultPlaces =
+      List.empty(growable: true); // Resultado final
   List<Map<String, dynamic>> _groupedData = [];
 
   //Getters
@@ -72,6 +76,10 @@ class PreferencesProvider extends ChangeNotifier {
 
   List<PlaceData> getResultPlaces() {
     return _resultPlaces;
+  }
+
+  List<double> getTimeResultPlaces() {
+    return _timeResultPlaces;
   }
 
   // Getters
@@ -140,6 +148,11 @@ class PreferencesProvider extends ChangeNotifier {
 
   void setResultPlaces(List<PlaceData> resultPlaces) {
     _resultPlaces = resultPlaces;
+    notifyListeners();
+  }
+
+  void setTimeResultPlaces(List<double> timeResultPlaces) {
+    _timeResultPlaces = timeResultPlaces;
     notifyListeners();
   }
 

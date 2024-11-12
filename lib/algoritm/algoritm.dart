@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -29,10 +30,13 @@ class _AlgoritmState extends State<Algoritm> {
   String dateStart = PreferencesProvider.instance.getStartTIme()!;
   String dateEnd = PreferencesProvider.instance.getEndTime()!;
   List<Map<String, dynamic>> groupedData = [];
+  // Velocidad promedio en m/s es decir 18 km/h
+  double averageSpeedMetersPerSecond = 4;
 
   Map<String, dynamic> bestRouteAll = {
     'route': [],
     'fitness': double.infinity,
+    'timeRoute': [],
   };
 
   Future<void> fetchClimateData() async {
@@ -155,19 +159,29 @@ class _AlgoritmState extends State<Algoritm> {
     print(places.length);
 
     List<List<double>> distanceMatrix = generateDistanceMatrix(places);
+    List<List<double>> timeMatrix = generateTimeMatrix(distanceMatrix);
 
+    print("Matriz de distancias");
     for (int i = 0; i < places.length; i++) {
       nameToIndex[places[i].name] = i;
     }
-    print(nameToIndex);
     for (int i = 0; i < distanceMatrix.length; i++) {
       String row = '';
       for (int j = 0; j < distanceMatrix[i].length; j++) {
         row += '${distanceMatrix[i][j].toStringAsFixed(2)}\t';
       }
     }
-    runGeneticAlgorithm(
-        600, 250, distanceMatrix, places, groupedData.length, nameToIndex);
+
+    print("Matriz de tiempos");
+    for (int i = 0; i < timeMatrix.length; i++) {
+      String row = '';
+      for (int j = 0; j < timeMatrix[i].length; j++) {
+        row += '${timeMatrix[i][j].toStringAsFixed(2)}\t';
+      }
+    }
+
+    runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
+        groupedData.length, nameToIndex);
 
     //showResultFunction();
     print(bestRouteAll);
@@ -271,7 +285,18 @@ class _AlgoritmState extends State<Algoritm> {
       }
     }
 
+    //Lista de tiempos...
+    List<double> timeList = [];
+    for (int i = 1; i < bestRouteAll['timeRoute'].length; i += 2) {
+      // Asegurarse de que el índice no exceda el rango de la lista
+      if (i < bestRouteAll['timeRoute'].length) {
+        timeList.add(double.parse(bestRouteAll['timeRoute']
+            [i])); // Convertir a double y agregar a la lista de tiempos
+      }
+    }
+
     PreferencesProvider.instance.setResultPlaces(resultPlaces);
+    PreferencesProvider.instance.setTimeResultPlaces(timeList);
 
     resultPlaces.forEach(
       (element) {
@@ -289,7 +314,9 @@ class _AlgoritmState extends State<Algoritm> {
     //print("LImitplaces = ${limitPlaces.length}");
 
     List<List<double>> distanceMatrix = generateDistanceMatrix(places);
+    List<List<double>> timeMatrix = generateTimeMatrix(distanceMatrix);
 
+    print("Matriz de distancias");
     for (int i = 0; i < places.length; i++) {
       nameToIndex[places[i].name] = i; // Asociar cada nombre con su índice
     }
@@ -302,9 +329,24 @@ class _AlgoritmState extends State<Algoritm> {
       }
       debugPrint(row);
     }
+
+    print("Matriz de tiempos");
+    for (int i = 0; i < places.length; i++) {
+      nameToIndex[places[i].name] = i; // Asociar cada nombre con su índice
+    }
+    print(nameToIndex);
+    for (int i = 0; i < timeMatrix.length; i++) {
+      String row = '';
+      for (int j = 0; j < timeMatrix[i].length; j++) {
+        row +=
+            '${timeMatrix[i][j].toStringAsFixed(2)}\t'; // Ajusta la precisión como prefieras
+      }
+      debugPrint(row);
+    }
+
     //places.forEach((element) => print(element.name));
-    runGeneticAlgorithm(
-        600, 250, distanceMatrix, places, groupedData.length, nameToIndex);
+    runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
+        groupedData.length, nameToIndex);
 
     //PROBANDO EL METODO
     //generateInitialPopulationMain(5, getNamesOfPlaces(places));
@@ -488,21 +530,32 @@ class _AlgoritmState extends State<Algoritm> {
         penalty; // Retorna la distancia total con la penalización
   } */
 
-  double calculateFitness(
+  Map<String, dynamic> calculateFitness(
       List<String> route,
       List<List<double>> distanceMatrix,
+      List<List<double>> timeMatrix,
       List<PlaceData> places,
       List<bool> isOutdoorIntervals,
       Map<String, int> nameToIndex) {
     double totalDistance = 0.0;
+    double totalTime = 0.0;
     double penalty =
         0.0; // Penalización por lugares al aire libre en intervalos no adecuados
+    List<String> timeRoute = [];
+    List<String> names = nameToIndex.keys.toList();
 
     for (int i = 0; i < route.length - 1; i++) {
       // Obtener los índices usando el mapa
       int position1 = nameToIndex[route[i]]!;
       int position2 = nameToIndex[route[i + 1]]!;
       totalDistance += distanceMatrix[position1][position2];
+      totalTime += timeMatrix[position1][position2];
+
+      if (i == 0) {
+        timeRoute.add(names[position1]);
+      }
+      timeRoute.add("${timeMatrix[position1][position2]}");
+      timeRoute.add(names[position2]);
 
       // Penalización basada en el isOutdoorIntervals solo si no es el startingPoint
       if (i > 0) {
@@ -531,8 +584,12 @@ class _AlgoritmState extends State<Algoritm> {
     int endPosition = nameToIndex[route.last]!;
     totalDistance += distanceMatrix[endPosition][startPosition];
 
-    return totalDistance +
-        penalty; // Retorna la distancia total con la penalización
+    //print(timeRoute);
+    //print(totalTime);
+
+/*     return totalDistance +
+        penalty; // Retorna la distancia total con la penalización */
+    return {'fitness': totalDistance + penalty, 'timeRoute': timeRoute};
   }
 
   List<String> selection(
@@ -674,6 +731,7 @@ class _AlgoritmState extends State<Algoritm> {
       int generations,
       int populationSize,
       List<List<double>> distanceMatrix,
+      List<List<double>> timeMatrix,
       List<PlaceData> places,
       int limit,
       Map<String, int> nameToIndex) {
@@ -690,21 +748,32 @@ class _AlgoritmState extends State<Algoritm> {
         generateInitialPopulationMain(populationSize, names, limit);
 
     for (int generation = 0; generation < generations; generation++) {
-      List<double> fitnessValues = population
-          .map((route) => calculateFitness(
-              route, distanceMatrix, places, isOutdoorIntervals, nameToIndex))
+/*       List<double> fitnessValues = population
+          .map((route) => calculateFitness(route, distanceMatrix, timeMatrix,
+              places, isOutdoorIntervals, nameToIndex))
           .toList();
+           */
+      List<Map<String, dynamic>> fitnessResults = population
+          .map((route) => calculateFitness(route, distanceMatrix, timeMatrix,
+              places, isOutdoorIntervals, nameToIndex))
+          .toList();
+      List<double> fitnessValues =
+          fitnessResults.map((result) => result['fitness'] as double).toList();
       //List<String> names = getNamesOfPlaces(places);
       double minFitnessValue = fitnessValues.reduce((a, b) => a < b ? a : b);
 
       int bestSolutionIndex = fitnessValues.indexOf(minFitnessValue);
       List<String> bestRooute = population[bestSolutionIndex];
+      List<String> bestTimeRoute =
+          fitnessResults[bestSolutionIndex]['timeRoute'];
+
       //displayEvolution(generation, bestRooute, minFitnessValue);
 
       // Comparar y actualizar bestRouteAll
       if (minFitnessValue < bestRouteAll['fitness']) {
         bestRouteAll['route'] = bestRooute;
         bestRouteAll['fitness'] = minFitnessValue;
+        bestRouteAll['timeRoute'] = bestTimeRoute;
       }
 
       List<List<String>> newGeneration = [];
@@ -737,6 +806,8 @@ class _AlgoritmState extends State<Algoritm> {
     }
     print(
         'La mejor ruta encontrada con fitness: ${bestRouteAll['fitness']}, ${bestRouteAll['route']}');
+    print(
+        'La mejor ruta encontrada con fitness time: ${bestRouteAll['fitness']}, ${bestRouteAll['timeRoute']}');
 
     //Mostrar informacion de si e al aire libre o no.
     /* for (String placeName in bestRouteAll['route']) {
@@ -767,16 +838,17 @@ class _AlgoritmState extends State<Algoritm> {
 
   void printPlaceData(List<PlaceData> places) {
     for (var place in places) {
-      print('ID: ${place.id}');
-      print('Name: ${place.name}');
-      print(
+      debugPrint('ID: ${place.id}');
+      debugPrint('Name: ${place.name}');
+      debugPrint(
           'Coordinates: (${place.coordinates.latitude}, ${place.coordinates.longitude})');
-      print('Rating: ${place.rating}');
-      print('Type: ${place.type}');
-      print('hours: ${place.weekdayDescriptions}');
-      print('isOutdoor: ${place.isOutdoor}');
-      print('isMandatory: ${place.isMandatory}');
-      print('-------------------');
+      debugPrint('Rating: ${place.rating}');
+      debugPrint('Type: ${place.type}');
+      debugPrint('hours: ${place.weekdayDescriptions}');
+      debugPrint('isOutdoor: ${place.isOutdoor}');
+      debugPrint('isMandatory: ${place.isMandatory}');
+      debugPrint('hola: ${place.openingPeriods.toString()}');
+      debugPrint('-------------------');
     }
   }
 
@@ -798,9 +870,9 @@ class _AlgoritmState extends State<Algoritm> {
     return names;
   }
 
-// Función para calcular la distancia entre dos puntos utilizando la fórmula del haversine
+// Función para calcular la distancia entre dos puntos utilizando la fórmula del haversine en metros
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    const R = 6371; // Radio de la Tierra en kilómetros
+    const R = 6371000; // Radio de la Tierra en metros
     double dLat = _degreesToRadians(lat2 - lat1);
     double dLon = _degreesToRadians(lon2 - lon1);
 
@@ -811,7 +883,7 @@ class _AlgoritmState extends State<Algoritm> {
             sin(dLon / 2);
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
     double distance = R * c;
-    return distance; // Distancia en kilómetros
+    return distance; // Distancia en metros
   }
 
 // Función auxiliar para convertir grados a radianes
@@ -819,7 +891,7 @@ class _AlgoritmState extends State<Algoritm> {
     return degrees * pi / 180;
   }
 
-// Función para generar la matriz de distancias
+// Función para generar la matriz de distancias en metros
   List<List<double>> generateDistanceMatrix(List<PlaceData> places) {
     int n = places.length;
     List<List<double>> distanceMatrix =
@@ -840,6 +912,27 @@ class _AlgoritmState extends State<Algoritm> {
       }
     }
     return distanceMatrix;
+  }
+
+// Función para generar la matriz de tiempos en segundos basada en la matriz de distancias y una velocidad promedio
+  List<List<double>> generateTimeMatrix(List<List<double>> distanceMatrix) {
+    int n = distanceMatrix.length;
+    List<List<double>> timeMatrix =
+        List.generate(n, (_) => List.filled(n, 0.0), growable: false);
+
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        if (i == j) {
+          timeMatrix[i][j] = 0.0; // El tiempo de viaje al mismo lugar es 0
+        } else {
+          // Calcular el tiempo en segundos basado en la distancia y la velocidad promedio
+          double time = distanceMatrix[i][j] /
+              averageSpeedMetersPerSecond; // Tiempo en segundos
+          timeMatrix[i][j] = time;
+        }
+      }
+    }
+    return timeMatrix;
   }
 
 /*   // Función para generar la matriz de distancias

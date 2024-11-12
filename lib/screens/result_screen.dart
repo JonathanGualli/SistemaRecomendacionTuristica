@@ -26,6 +26,8 @@ class _ResultScreenState extends State<ResultScreen> {
   LatLng initialLocation = PreferencesProvider.instance.getInitialLocation()!;
   List<Marker> markers = [];
   List<PlaceData> resultPlaces = PreferencesProvider.instance.getResultPlaces();
+  List<double> timeResultPlaces =
+      PreferencesProvider.instance.getTimeResultPlaces();
   List<Polyline> polylines = []; // Lista para almacenar las líneas de ruta
   double radius = PreferencesProvider.instance.getRadius();
   List<Map<String, dynamic>> groupedData =
@@ -188,6 +190,11 @@ class _ResultScreenState extends State<ResultScreen> {
     return List.empty(growable: true);
   }
 
+  int secondsToMinutes(double seconds) {
+    // Convertir los segundos a minutos y devolver solo la parte entera
+    return seconds ~/ 60; // Utilizamos el operador ~/ para división entera
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -264,242 +271,303 @@ class _ResultScreenState extends State<ResultScreen> {
                       final place = resultPlaces[index];
                       Map<String, dynamic> placeDetails =
                           getPlaceDetails(place.type);
-                      return Column(
+                      return Row(
                         children: [
-                          Expanded(
-                            flex: 2,
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    formatStartEndTime(
-                                      groupedData[index]['startTime'],
-                                      groupedData[index]['endTime'],
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blueGrey,
-                                    ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "${secondsToMinutes(timeResultPlaces[index])} min",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blueGrey,
                                   ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      NavigationService.instance
-                                          .navigatePushName(
-                                              ClimateInformationScreen
-                                                  .routeName);
-                                    },
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Clima: ',
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black54),
-                                        ),
-                                        groupedData[index]['code'] == 4200
-                                            ? Image.network(
-                                                _getWeatherIconUrl(
-                                                  groupedData[index]['code']
-                                                      .toString(),
-                                                ),
-                                                height: 30,
-                                              )
-                                            : SvgPicture.network(
-                                                _getWeatherIconUrl(
-                                                  groupedData[index]['code']
-                                                      .toString(),
-                                                ),
-                                                height: 30,
-                                              ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '${groupedData[index]["maxPrecipitationProbability"]}%',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: groupedData[index][
-                                                        "maxPrecipitationProbability"] >
-                                                    25
-                                                ? Colors.red
-                                                : Colors
-                                                    .blue, // Color del porcentaje
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    print(timeResultPlaces);
+                                    print(groupedData[index]['startTime']);
+
+                                    DateTime startTime = DateTime.parse(
+                                        groupedData[index]['startTime']);
+
+                                    List<DateTime> timeList = [];
+
+                                    DateTime currentTime = startTime;
+
+                                    for (double seconds in timeResultPlaces) {
+                                      // Sumar el tiempo en segundos a currentTime
+                                      currentTime = currentTime.add(
+                                          Duration(seconds: seconds.toInt()));
+                                      // Agregar el tiempo actualizado a la lista
+                                      timeList.add(currentTime);
+                                      // Sumar 1.5 horas (90 minutos) a currentTime
+                                      currentTime = currentTime
+                                          .add(Duration(minutes: 90));
+                                    }
+
+                                    print(timeList);
+
+                                    /* // Imprimir la lista de tiempos
+                                    for (DateTime time in timeList) {
+                                      print(time.toIso8601String());
+                                    } */
+                                  },
+                                  child: Image.asset(
+                                    "assets/car.gif",
+                                    height: 50,
                                   ),
-                                  //Text('Prob')
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                          Expanded(
-                            flex: 10,
-                            child: GestureDetector(
-                              onTap: () {
-                                _moveCameraToPlace(place);
-                                print(place.id);
-                                print(place.googleMapsUri);
-                                print(place.isMandatory);
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 6,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                  image: place.urlImages.isNotEmpty
-                                      ? DecorationImage(
-                                          image: NetworkImage(
-                                              place.urlImages.first),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : const DecorationImage(
-                                          image: AssetImage(
-                                              'assets/colorImage.jpg'),
-                                          fit: BoxFit.cover,
+                          Column(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        formatStartEndTime(
+                                          groupedData[index]['startTime'],
+                                          groupedData[index]['endTime'],
                                         ),
-                                ),
-                                width: 160,
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      bottom: 0,
-                                      left: 0,
-                                      right: 0,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: const BorderRadius.only(
-                                            bottomLeft: Radius.circular(15),
-                                            bottomRight: Radius.circular(15),
-                                          ),
-                                          color: Colors.black.withOpacity(0.7),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blueGrey,
                                         ),
-                                        padding: const EdgeInsets.all(8),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          NavigationService.instance
+                                              .navigatePushName(
+                                                  ClimateInformationScreen
+                                                      .routeName);
+                                        },
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
                                           children: [
+                                            const Text(
+                                              'Clima: ',
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black54),
+                                            ),
+                                            groupedData[index]['code'] == 4200
+                                                ? Image.network(
+                                                    _getWeatherIconUrl(
+                                                      groupedData[index]['code']
+                                                          .toString(),
+                                                    ),
+                                                    height: 30,
+                                                  )
+                                                : SvgPicture.network(
+                                                    _getWeatherIconUrl(
+                                                      groupedData[index]['code']
+                                                          .toString(),
+                                                    ),
+                                                    height: 30,
+                                                  ),
+                                            const SizedBox(width: 8),
                                             Text(
-                                              place.name,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
+                                              '${groupedData[index]["maxPrecipitationProbability"]}%',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: groupedData[index][
+                                                            "maxPrecipitationProbability"] >
+                                                        25
+                                                    ? Colors.red
+                                                    : Colors
+                                                        .blue, // Color del porcentaje
+                                                fontWeight: FontWeight.w600,
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 5),
-                                            Row(
-                                              children: [
-                                                const Icon(Icons.star,
-                                                    color: Colors.yellowAccent,
-                                                    size: 16),
-                                                Text(
-                                                  place.rating == 'null'
-                                                      ? ' Sin información'
-                                                      : ' ${place.rating}',
-                                                  style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Icon(
-                                                  placeDetails[
-                                                      "icon"], // Icono basado en el tipo de lugar
-                                                  color: placeDetails[
-                                                      "color"], // Color basado en el tipo
-                                                  size: 16,
-                                                ),
-                                                const SizedBox(width: 5),
-                                                Text(
-                                                  placeDetails[
-                                                      "name"], // Nombre personalizado del lugar
-                                                  style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                Icon(
-                                                  place.isOutdoor
-                                                      ? Icons.wb_sunny
-                                                      : Icons.home,
-                                                  color: Colors.white70,
-                                                  size: 16,
-                                                ),
-                                                Text(
-                                                  place.isOutdoor
-                                                      ? ' Al aire libre'
-                                                      : ' Cubierto',
-                                                  style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 12),
-                                                ),
-                                              ],
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      child: IconButton(
-                                        onPressed: () {
-                                          dialogImages(context, place);
-                                        },
-                                        icon: const Icon(
-                                          Icons.photo_library,
-                                          color: Colors.pinkAccent,
-                                          size: 30,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 0,
-                                      child: IconButton(
-                                        onPressed: () async {
-                                          final Uri googleMapsUri =
-                                              Uri.parse(place.googleMapsUri);
-                                          if (await canLaunchUrl(
-                                              googleMapsUri)) {
-                                            await launchUrl(googleMapsUri);
-                                          } else {
-                                            print(
-                                                'No se pudo abrir el enlace a Google Maps');
-                                          }
-                                        },
-                                        icon: const Icon(
-                                          Icons.location_on,
-                                          color: Colors.pinkAccent,
-                                          size: 30,
-                                        ),
-                                      ),
-                                    )
-                                  ],
+                                      //Text('Prob')
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
+                              Expanded(
+                                flex: 10,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    _moveCameraToPlace(place);
+                                    print(place.id);
+                                    print(place.googleMapsUri);
+                                    print(place.isMandatory);
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(15),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.black26,
+                                          blurRadius: 6,
+                                          offset: Offset(0, 4),
+                                        ),
+                                      ],
+                                      image: place.urlImages.isNotEmpty
+                                          ? DecorationImage(
+                                              image: NetworkImage(
+                                                  place.urlImages.first),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : const DecorationImage(
+                                              image: AssetImage(
+                                                  'assets/colorImage.jpg'),
+                                              fit: BoxFit.cover,
+                                            ),
+                                    ),
+                                    width: 160,
+                                    child: Stack(
+                                      children: [
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  const BorderRadius.only(
+                                                bottomLeft: Radius.circular(15),
+                                                bottomRight:
+                                                    Radius.circular(15),
+                                              ),
+                                              color:
+                                                  Colors.black.withOpacity(0.7),
+                                            ),
+                                            padding: const EdgeInsets.all(8),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  place.name,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 5),
+                                                Row(
+                                                  children: [
+                                                    const Icon(Icons.star,
+                                                        color:
+                                                            Colors.yellowAccent,
+                                                        size: 16),
+                                                    Text(
+                                                      place.rating == 'null'
+                                                          ? ' Sin información'
+                                                          : ' ${place.rating}',
+                                                      style: const TextStyle(
+                                                          color: Colors.white70,
+                                                          fontSize: 12),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      placeDetails[
+                                                          "icon"], // Icono basado en el tipo de lugar
+                                                      color: placeDetails[
+                                                          "color"], // Color basado en el tipo
+                                                      size: 16,
+                                                    ),
+                                                    const SizedBox(width: 5),
+                                                    Text(
+                                                      placeDetails[
+                                                          "name"], // Nombre personalizado del lugar
+                                                      style: const TextStyle(
+                                                          color: Colors.white70,
+                                                          fontSize: 12),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      place.isOutdoor
+                                                          ? Icons.wb_sunny
+                                                          : Icons.home,
+                                                      color: Colors.white70,
+                                                      size: 16,
+                                                    ),
+                                                    Text(
+                                                      place.isOutdoor
+                                                          ? ' Al aire libre'
+                                                          : ' Cubierto',
+                                                      style: const TextStyle(
+                                                          color: Colors.white70,
+                                                          fontSize: 12),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          right: 0,
+                                          child: IconButton(
+                                            onPressed: () {
+                                              dialogImages(context, place);
+                                            },
+                                            icon: const Icon(
+                                              Icons.photo_library,
+                                              color: Colors.pinkAccent,
+                                              size: 30,
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 0,
+                                          child: IconButton(
+                                            onPressed: () async {
+                                              final Uri googleMapsUri =
+                                                  Uri.parse(
+                                                      place.googleMapsUri);
+                                              if (await canLaunchUrl(
+                                                  googleMapsUri)) {
+                                                await launchUrl(googleMapsUri);
+                                              } else {
+                                                print(
+                                                    'No se pudo abrir el enlace a Google Maps');
+                                              }
+                                            },
+                                            icon: const Icon(
+                                              Icons.location_on,
+                                              color: Colors.pinkAccent,
+                                              size: 30,
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Spacer(
+                                flex: 1,
+                              ),
+                            ],
                           ),
-                          Spacer(
-                            flex: 1,
-                          )
                         ],
                       );
                     },

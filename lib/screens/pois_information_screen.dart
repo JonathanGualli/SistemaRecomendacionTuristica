@@ -530,6 +530,21 @@ class _PoisInformationState extends State<PoisInformation> {
                         final open = period['open'];
                         final close = period['close'];
 
+                        // Verificar si el lugar está abierto 24 horas (sin horario de cierre)
+                        if (open != null && close == null) {
+                          return OpeningPeriod(
+                            openDay: open['day'] ?? 0, // Día de apertura
+                            openHour: 0, // Hora de apertura al inicio del día
+                            openMinute: 0,
+                            closeDay: open[
+                                'day'], // Día de cierre igual al de apertura
+                            closeHour: 23, // Hora de cierre al final del día
+                            closeMinute: 59,
+                            isOpen24Hours:
+                                true, // Marcar que está abierto 24 horas
+                          );
+                        }
+
                         // Verificar que 'open' y 'close' no sean nulos antes de crear el objeto OpeningPeriod
                         if (open != null && close != null) {
                           return OpeningPeriod(
