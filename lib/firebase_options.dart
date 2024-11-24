@@ -46,7 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '649725281538',
     projectId: 'tesis-v2-9226e',
     authDomain: 'tesis-v2-9226e.firebaseapp.com',
-    storageBucket: 'tesis-v2-9226e.appspot.com',
+    storageBucket: 'tesis-v2-9226e.firebasestorage.app',
     measurementId: 'G-4MH3ZMBPH6',
   );
 
@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:649725281538:android:06705018ae00ba90872e1b',
     messagingSenderId: '649725281538',
     projectId: 'tesis-v2-9226e',
-    storageBucket: 'tesis-v2-9226e.appspot.com',
+    storageBucket: 'tesis-v2-9226e.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     appId: '1:649725281538:ios:9647fa0a53c0a4f0872e1b',
     messagingSenderId: '649725281538',
     projectId: 'tesis-v2-9226e',
-    storageBucket: 'tesis-v2-9226e.appspot.com',
+    storageBucket: 'tesis-v2-9226e.firebasestorage.app',
     androidClientId: '649725281538-53st58bceg60ppobjdmd0dsa9tj132p0.apps.googleusercontent.com',
     iosBundleId: 'com.example.tesisV2',
   );
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     appId: '1:649725281538:ios:9647fa0a53c0a4f0872e1b',
     messagingSenderId: '649725281538',
     projectId: 'tesis-v2-9226e',
-    storageBucket: 'tesis-v2-9226e.appspot.com',
+    storageBucket: 'tesis-v2-9226e.firebasestorage.app',
     androidClientId: '649725281538-53st58bceg60ppobjdmd0dsa9tj132p0.apps.googleusercontent.com',
     iosBundleId: 'com.example.tesisV2',
   );
@@ -84,7 +84,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '649725281538',
     projectId: 'tesis-v2-9226e',
     authDomain: 'tesis-v2-9226e.firebaseapp.com',
-    storageBucket: 'tesis-v2-9226e.appspot.com',
+    storageBucket: 'tesis-v2-9226e.firebasestorage.app',
     measurementId: 'G-E1C5FY41T2',
   );
 

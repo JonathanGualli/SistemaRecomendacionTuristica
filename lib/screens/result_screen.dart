@@ -32,6 +32,10 @@ class _ResultScreenState extends State<ResultScreen> {
   double radius = PreferencesProvider.instance.getRadius();
   List<Map<String, dynamic>> groupedData =
       PreferencesProvider.instance.groupedData;
+  double additionalTime = PreferencesProvider.instance.getAdditionalTime();
+  //String currentTime = PreferencesProvider.instance.getStartTIme()!;
+  String startTime = PreferencesProvider.instance.getStartTIme()!;
+  List<String> visitsTimes = [];
 
   BitmapDescriptor?
       customStartIcon; // Ícono personalizado para el punto de partida
@@ -43,6 +47,7 @@ class _ResultScreenState extends State<ResultScreen> {
     _fetchInfoPlaces();
     _createMarkers();
     _createRoute(); // Crear la ruta entre los lugares
+    getVisitsTimes();
     _loadCustomStartIcon(); // Cargar el ícono personalizado
   }
 
@@ -332,10 +337,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        formatStartEndTime(
-                                          groupedData[index]['startTime'],
-                                          groupedData[index]['endTime'],
-                                        ),
+                                        visitsTimes[index],
                                         style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
@@ -404,6 +406,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                     print(place.id);
                                     print(place.googleMapsUri);
                                     print(place.isMandatory);
+                                    //getVisitTime();
                                   },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
@@ -726,5 +729,34 @@ class _ResultScreenState extends State<ResultScreen> {
     }
 
     return '';
+  }
+
+  void getVisitsTimes() {
+    DateTime startTimeLocal = DateTime.parse(startTime);
+    startTimeLocal =
+        startTimeLocal.add(Duration(seconds: timeResultPlaces[0].round()));
+    int visitDuration = 90 * 60; // 90 minutos en segundos
+
+    // Distribuir el tiempo adicional equitativamente
+    int extraTimePerSite = additionalTime ~/ resultPlaces.length;
+    DateTime
+        endTimeLocal; //= startTimeLocal.add(Duration(seconds: visitDuration + extraTimePerSite));
+
+    for (int i = 0; i < resultPlaces.length; i++) {
+      endTimeLocal = startTimeLocal
+          .add(Duration(seconds: visitDuration + extraTimePerSite));
+      String formattedStartTime = DateFormat('h:mm a').format(startTimeLocal);
+      String formattedEndTime = DateFormat('h:mm a').format(endTimeLocal);
+      visitsTimes.add('$formattedStartTime - $formattedEndTime');
+      startTimeLocal = endTimeLocal;
+      if (resultPlaces.length != (i + 1)) {
+        startTimeLocal = startTimeLocal
+            .add(Duration(seconds: timeResultPlaces[i + 1].round()));
+      }
+    }
+
+    //currentTime = endTimeLocal.toIso8601String();
+
+    //return '$formattedStartTime - $formattedEndTime';
   }
 }

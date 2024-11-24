@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -510,14 +511,21 @@ class _SpecificPoiSelectionScreenState
 
     if (responseResult.statusCode == 200) {
       setState(() {
-        listForPlaces = jsonDecode(responseResult.body.toString())['places'];
+        if (responseResult.body.isNotEmpty) {
+          listForPlaces = jsonDecode(responseResult.body.toString())['places'];
+        }
       });
     } else {
-      throw Exception('Algo salió mal, inténtalo de nuevo');
+      print("Algo salió mal, inténtalo de nuevo");
+      //throw Exception('Algo salió mal, inténtalo de nuevo');
     }
   }
 
-  void onModify() {
-    makeSuggestion(_addressController.text);
+  void onModify() async {
+    try {
+      makeSuggestion(_addressController.text);
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 }

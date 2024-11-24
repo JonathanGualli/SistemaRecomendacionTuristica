@@ -30,13 +30,19 @@ class _AlgoritmState extends State<Algoritm> {
   String dateStart = PreferencesProvider.instance.getStartTIme()!;
   String dateEnd = PreferencesProvider.instance.getEndTime()!;
   List<Map<String, dynamic>> groupedData = [];
+  List<List<String>> population = [];
   // Velocidad promedio en m/s es decir 18 km/h
   double averageSpeedMetersPerSecond = 4;
 
   Map<String, dynamic> bestRouteAll = {
     'route': [],
-    'fitness': double.infinity,
+    'fitness': double.infinity, //double.infinite? porque lo puse asi? ,,, nose.
     'timeRoute': [],
+  };
+
+  Map<String, int> timeLimit = {
+    'limit': 0, // limite de lugares a visitar.
+    'extraTime': 0, // en segundos.
   };
 
   Future<void> fetchClimateData() async {
@@ -268,11 +274,56 @@ class _AlgoritmState extends State<Algoritm> {
                 },
               );
               print(climateDataList!.length); */
-              String dateStart = '2024-11-12T08:00:00.000Z';
+              //String dateStart = '2024-11-12T08:00:00.000Z';
 
-              String dateEnd = '2024-11-12T10:30:00.000Z';
+              //String dateEnd = '2024-11-12T10:30:00.000Z';
 
-              print(calculateTotalHours(dateStart, dateEnd));
+              //print(calculateTotalHours(dateStart, dateEnd));
+              //print(climateDataList!.length);
+
+              //int limit = 0;
+
+              List<int> climateDataList = [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+              ];
+
+              print((climateDataList.length - 1) % 3);
+
+              if ((climateDataList!.length - 1) % 3 == 0) {
+                timeLimit['limit'] = ((climateDataList!.length - 1) ~/ 3) - 1;
+                timeLimit['extraTime'] = 90;
+              } else {
+                timeLimit['limit'] = (climateDataList!.length - 1) ~/ 3;
+                if ((climateDataList.length - 1) % 3 == 1) {
+                  timeLimit['extraTime'] = 30;
+                } else {
+                  timeLimit['extraTime'] = 60;
+                }
+              }
+
+              print(timeLimit);
             },
             child: Text("MOSTRAR COSAS"),
           ),
@@ -305,6 +356,10 @@ class _AlgoritmState extends State<Algoritm> {
     print(bestRouteAll);
 
     resultPlaces = [];
+    //Lista de tiempos...
+    List<double> timeList = [];
+    //Variable para tiempo adicional.
+    double additionalTime = 0;
 
     for (String placeName in bestRouteAll['route']) {
       if (placeName != 'startingPoint') {
@@ -325,8 +380,6 @@ class _AlgoritmState extends State<Algoritm> {
       }
     }
 
-    //Lista de tiempos...
-    List<double> timeList = [];
     for (int i = 1; i < bestRouteAll['timeRoute'].length; i += 2) {
       // Asegurarse de que el índice no exceda el rango de la lista
       if (i < bestRouteAll['timeRoute'].length) {
@@ -335,8 +388,13 @@ class _AlgoritmState extends State<Algoritm> {
       }
     }
 
+    //Obtener el tiempo adicional que se aumentara en la horas de visita.
+    String numberPart = bestRouteAll['timeRoute'][0].toString().split('-').last;
+    additionalTime = double.parse(numberPart);
+
     PreferencesProvider.instance.setResultPlaces(resultPlaces);
     PreferencesProvider.instance.setTimeResultPlaces(timeList);
+    PreferencesProvider.instance.setAdditionalTime(additionalTime);
 
     resultPlaces.forEach(
       (element) {
@@ -385,8 +443,8 @@ class _AlgoritmState extends State<Algoritm> {
     }
 
     //places.forEach((element) => print(element.name));
-/*     runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
-        groupedData.length, nameToIndex); */
+    runGeneticAlgorithm(
+        600, 250, distanceMatrix, timeMatrix, places, nameToIndex);
 
     //PROBANDO EL METODO
     //generateInitialPopulationMain(5, getNamesOfPlaces(places));
@@ -571,25 +629,56 @@ class _AlgoritmState extends State<Algoritm> {
   } */
 
   Map<String, dynamic> calculateFitness(
-      List<String> route,
-      List<List<double>> distanceMatrix,
-      List<List<double>> timeMatrix,
-      List<PlaceData> places,
-      List<bool> isOutdoorIntervals,
-      Map<String, int> nameToIndex) {
+    List<String> route,
+    List<List<double>> distanceMatrix,
+    List<List<double>> timeMatrix,
+    List<PlaceData> places,
+    List<bool> isOutdoorIntervals,
+    Map<String, int> nameToIndex,
+    int populationIndex,
+  ) {
+    route = List.from(route);
     double totalDistance = 0.0;
     double totalTime = 0.0;
     double penalty =
-        0.0; // Penalización por lugares al aire libre en intervalos no adecuados
+        0.0; // Penalización por lugares al aire libre en intervalos no adecuados y mucho mas
     List<String> timeRoute = [];
+
     List<String> names = nameToIndex.keys.toList();
+
+    int localExtraTime = timeLimit['extraTime']!;
+
+    //verificar si mi lista cointiene -1
+
+    if (route.contains('-1') || route.length <= timeLimit['limit']!) {
+      route.removeWhere((element) => element == '-1');
+      population[populationIndex] = route;
+      localExtraTime += 5400;
+      penalty += 12500.0;
+    }
+
+    //Primer recorrido para calcular el timepo total.
+    for (int i = 0; i < route.length - 1; i++) {
+      // Obtener los índices usando el mapa
+      int position1 = nameToIndex[route[i]]!;
+      int position2 = nameToIndex[route[i + 1]]!;
+      totalTime += timeMatrix[position1][position2];
+    }
+
+    if (localExtraTime < totalTime) {
+      int randomIndex = Random().nextInt(route.length - 1) + 1;
+      route.removeAt(randomIndex);
+      population[populationIndex] = route;
+      penalty += 12500.0;
+      localExtraTime += 5400;
+    }
 
     for (int i = 0; i < route.length - 1; i++) {
       // Obtener los índices usando el mapa
       int position1 = nameToIndex[route[i]]!;
       int position2 = nameToIndex[route[i + 1]]!;
       totalDistance += distanceMatrix[position1][position2];
-      totalTime += timeMatrix[position1][position2];
+      //totalTime += timeMatrix[position1][position2];
 
       if (i == 0) {
         timeRoute.add(names[position1]);
@@ -605,15 +694,18 @@ class _AlgoritmState extends State<Algoritm> {
         if (isOutdoorPlace != isOutdoorIntervals[i - 1]) {
           if (isOutdoorIntervals[i - 1] == true) {
             //print('penalizado leve');
-            penalty += 5;
+            //antes estaba en 5
+            penalty += 500.0;
           } else {
             //print('penalizado grabe');
-            penalty += 25.0;
+            //antes estaba en 25
+            penalty += 2500.0;
           }
         }
 
         if (!places[position1].isMandatory) {
-          penalty += 50;
+          //antes 50
+          penalty += 10000;
           //print('Penalizacion muy grave');
         }
       }
@@ -624,11 +716,18 @@ class _AlgoritmState extends State<Algoritm> {
     int endPosition = nameToIndex[route.last]!;
     totalDistance += distanceMatrix[endPosition][startPosition];
 
+    //para calcular la duracion de cada visita.
+    double timeVisit = localExtraTime - totalTime;
+    timeRoute[0] = '${timeRoute[0]}-$timeVisit';
+
     //print(timeRoute);
     //print(totalTime);
 
 /*     return totalDistance +
         penalty; // Retorna la distancia total con la penalización */
+
+// IMPORTANTE: NO PONGO EL TIMEPO TOTAL EN EL FITNESS YA QUE VA RELACIONADO CON LA DISTANCIA TOTAL
+// Y PONERLO SERÍA REDUNDANTES Y PERJUDICIAL PARA MIS PENALIDADES.
     return {'fitness': totalDistance + penalty, 'timeRoute': timeRoute};
   }
 
@@ -685,7 +784,8 @@ class _AlgoritmState extends State<Algoritm> {
       }
     }
     return offspring;
-  } */
+  } 
+  */
 
   //FUNCION DESPUES DEL PUNTO INICIAL
   List<String> crossover(List<String> parent1, List<String> parent2) {
@@ -708,7 +808,7 @@ class _AlgoritmState extends State<Algoritm> {
 
     for (int i = 1; i < parent2.length; i++) {
       // Empezar desde el índice 1 para evitar el startingPoint
-      if (!offspring.contains(parent2[i])) {
+      if (!offspring.contains(parent2[i]) && offspring.contains('-1')) {
         offspring[currentIndex] = parent2[i];
         currentIndex = (currentIndex + 1) % parent1.length;
 
@@ -784,16 +884,31 @@ class _AlgoritmState extends State<Algoritm> {
 /*     List<PlaceData> newPlaces = filterAndOrderPlaces(places, limit);
     places = newPlaces; */
 
-    int limit = 0;
+//FORMA ANTERIOR, DONDE SOLO SE CONSIDERAVA EL LIMIT NO EL TIEMPO EXTRA.
+/*     int limit = 0;
 
     if ((climateDataList!.length - 1) % 3 == 0) {
       limit = ((climateDataList!.length - 1) ~/ 3) - 1;
     } else {
       limit = (climateDataList!.length - 1) ~/ 3;
-    }
+    } */
 
-    List<List<String>> population =
-        generateInitialPopulationMain(populationSize, names, limit);
+    if ((climateDataList!.length - 1) % 3 == 0) {
+      timeLimit['limit'] = ((climateDataList!.length - 1) ~/ 3) - 1;
+      timeLimit['extraTime'] = 5400; //en segundos.
+    } else {
+      timeLimit['limit'] = (climateDataList!.length - 1) ~/ 3;
+      if ((climateDataList!.length - 1) % 3 == 1) {
+        timeLimit['extraTime'] = 1800;
+      } else {
+        timeLimit['extraTime'] = 3600;
+      }
+    }
+    // EL tamaño de la poblacion inicial dependera de los intervalos que haya,
+    // el limit.
+
+    population = generateInitialPopulationMain(
+        populationSize, names, timeLimit['limit']!);
 
     for (int generation = 0; generation < generations; generation++) {
 /*       List<double> fitnessValues = population
@@ -801,10 +916,24 @@ class _AlgoritmState extends State<Algoritm> {
               places, isOutdoorIntervals, nameToIndex))
           .toList();
            */
-      List<Map<String, dynamic>> fitnessResults = population
-          .map((route) => calculateFitness(route, distanceMatrix, timeMatrix,
-              places, isOutdoorIntervals, nameToIndex))
-          .toList();
+      List<Map<String, dynamic>> fitnessResults =
+          population.asMap().entries.map((entry) {
+        int index = entry.key; // El índice del elemento en population
+        List<String> route =
+            entry.value; // El elemento actual (la lista `route`)
+
+        // Llamar a calculateFitness con el índice
+        return calculateFitness(
+            route,
+            distanceMatrix,
+            timeMatrix,
+            places,
+            isOutdoorIntervals,
+            nameToIndex,
+            index // Pasar el índice como parámetro adicional
+            );
+      }).toList();
+
       List<double> fitnessValues =
           fitnessResults.map((result) => result['fitness'] as double).toList();
       //List<String> names = getNamesOfPlaces(places);

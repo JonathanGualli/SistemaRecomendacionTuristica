@@ -1,0 +1,4 @@
+1. demora al elegir los lugares. 
+2. errores internos al elegir punto obligatorio. --> supuestamente corregido. 
+3. errores en modo invitado. 
+4.
