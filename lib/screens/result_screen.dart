@@ -36,6 +36,8 @@ class _ResultScreenState extends State<ResultScreen> {
   //String currentTime = PreferencesProvider.instance.getStartTIme()!;
   String startTime = PreferencesProvider.instance.getStartTIme()!;
   List<String> visitsTimes = [];
+  List<String> opneningsPeriods =
+      PreferencesProvider.instance.getOpeningsPeriods();
 
   BitmapDescriptor?
       customStartIcon; // Ícono personalizado para el punto de partida
@@ -393,7 +395,6 @@ class _ResultScreenState extends State<ResultScreen> {
                                           ],
                                         ),
                                       ),
-                                      //Text('Prob')
                                     ],
                                   ),
                                 ),
@@ -521,6 +522,12 @@ class _ResultScreenState extends State<ResultScreen> {
                                                           fontSize: 12),
                                                     ),
                                                   ],
+                                                ),
+                                                Text(
+                                                  opneningsPeriods[index],
+                                                  style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 12),
                                                 ),
                                               ],
                                             ),
@@ -754,9 +761,31 @@ class _ResultScreenState extends State<ResultScreen> {
             .add(Duration(seconds: timeResultPlaces[i + 1].round()));
       }
     }
-
     //currentTime = endTimeLocal.toIso8601String();
-
     //return '$formattedStartTime - $formattedEndTime';
   }
+
+  /*  void getOpeningPeriod() {
+    // Dividir el rango en inicio y fin
+    final parts = visitsTimes[i].split('*');
+    if (parts.length != 2) {
+      throw ArgumentError(
+          'El rango de tiempo debe tener el formato correcto: inicio*fin');
+    }
+    final startTime = DateTime.parse(parts[0]);
+    bool isOpening = false;
+
+    for (OpeningPeriod op in places[position1].openingPeriods) {
+      if (op.isOpen24Hours) {
+        isOpening = true;
+        break;
+      }
+      if (op.openDay == startTime.weekday) {
+        isOpening = op.isOpenForEntireRange(visitsTimes[i - 1]);
+        break;
+      } else {
+        isOpening = false;
+      }
+    }
+  } */
 }

@@ -1,8 +1,12 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:tesis_v2/models/opening_period_model.dart';
 import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
 import 'package:tesis_v2/screens/result_screen.dart';
@@ -33,6 +37,7 @@ class _AlgoritmState extends State<Algoritm> {
   List<List<String>> population = [];
   // Velocidad promedio en m/s es decir 18 km/h
   double averageSpeedMetersPerSecond = 4;
+  List<String> openingsPeriods = [];
 
   Map<String, dynamic> bestRouteAll = {
     'route': [],
@@ -123,93 +128,6 @@ class _AlgoritmState extends State<Algoritm> {
     );
   }
 
-  void runAutomaticAlgoritm() {
-    //showClimaFunction();
-    isOutdoorIntervals = [];
-    groupedData = [];
-    int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
-    print('llego hasta aca');
-    for (int i = 0; i < climateDataList!.length; i += 1) {
-      print(i);
-      if (i + interval > climateDataList!.length) break;
-      List<Map<String, dynamic>> group = climateDataList!
-          .sublist(i, i + interval + 1)
-          .cast<Map<String, dynamic>>();
-      print(group);
-
-      int maxPrecipitationProbability = -1;
-      int weatherCode = 0;
-      group.forEach((data) {
-        int probability = data['values']['precipitationProbability'] as int;
-        int code = data['values']['weatherCode'] as int;
-        if (probability > maxPrecipitationProbability) {
-          maxPrecipitationProbability = probability;
-          weatherCode = code;
-          print('debug code: $code');
-        }
-      });
-      groupedData.add({
-        'startTime': group.first['startTime'],
-        'endTime': group.last['startTime'],
-        'maxPrecipitationProbability': maxPrecipitationProbability,
-        'code': weatherCode,
-      });
-
-      isOutdoorIntervals.add(maxPrecipitationProbability <= 30);
-      i += 2;
-    }
-    PreferencesProvider.instance.groupedData = groupedData;
-
-    //startFunction();
-
-    print(places.length);
-
-    List<List<double>> distanceMatrix = generateDistanceMatrix(places);
-    List<List<double>> timeMatrix = generateTimeMatrix(distanceMatrix);
-
-    print("Matriz de distancias");
-    for (int i = 0; i < places.length; i++) {
-      nameToIndex[places[i].name] = i;
-    }
-    for (int i = 0; i < distanceMatrix.length; i++) {
-      String row = '';
-      for (int j = 0; j < distanceMatrix[i].length; j++) {
-        row += '${distanceMatrix[i][j].toStringAsFixed(2)}\t';
-      }
-    }
-
-    print("Matriz de tiempos");
-    for (int i = 0; i < timeMatrix.length; i++) {
-      String row = '';
-      for (int j = 0; j < timeMatrix[i].length; j++) {
-        row += '${timeMatrix[i][j].toStringAsFixed(2)}\t';
-      }
-    }
-
-/*     runGeneticAlgorithm(600, 250, distanceMatrix, timeMatrix, places,
-        groupedData.length, nameToIndex);
- */
-
-    runGeneticAlgorithm(
-        600, 250, distanceMatrix, timeMatrix, places, nameToIndex);
-
-    //showResultFunction();
-    print(bestRouteAll);
-
-    resultPlaces = [];
-
-    for (String placeName in bestRouteAll['route']) {
-      if (placeName != 'startingPoint') {
-        int index = nameToIndex[placeName]!;
-        PlaceData placeData = places[index];
-        resultPlaces.add(placeData);
-      }
-    }
-
-    PreferencesProvider.instance.setResultPlaces(resultPlaces);
-    NavigationService.instance.navigatePushName(ResultScreen.routeName);
-  }
-
   @override
   Widget build(BuildContext context) {
     //startPoint = PreferencesProvider.instance.getInitialLocation()!;
@@ -283,7 +201,7 @@ class _AlgoritmState extends State<Algoritm> {
 
               //int limit = 0;
 
-              List<int> climateDataList = [
+              /*  List<int> climateDataList = [
                 1,
                 2,
                 3,
@@ -323,7 +241,8 @@ class _AlgoritmState extends State<Algoritm> {
                 }
               }
 
-              print(timeLimit);
+              print(timeLimit); */
+              print(climateDataList);
             },
             child: Text("MOSTRAR COSAS"),
           ),
@@ -346,6 +265,20 @@ class _AlgoritmState extends State<Algoritm> {
               );
             },
             child: Text("Poblacion inicial"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              for (PlaceData place in places) {
+                if (place.name != 'startingPoint') {
+                  print(place.name);
+                  print(place.openingPeriods.toString());
+                  print(place.weekdayDescriptions);
+                  print(place.openingPeriods[2].isOpenAt(DateTime.now()));
+                  print('---------------------------------------------');
+                }
+              }
+            },
+            child: Text("Horarios de apertura"),
           ),
         ],
       ),
@@ -414,6 +347,9 @@ class _AlgoritmState extends State<Algoritm> {
     List<List<double>> distanceMatrix = generateDistanceMatrix(places);
     List<List<double>> timeMatrix = generateTimeMatrix(distanceMatrix);
 
+/*     double hola = calculateAverageDistance(distanceMatrix);
+    print(hola);
+ */
     print("Matriz de distancias");
     for (int i = 0; i < places.length; i++) {
       nameToIndex[places[i].name] = i; // Asociar cada nombre con su índice
@@ -444,20 +380,42 @@ class _AlgoritmState extends State<Algoritm> {
 
     //places.forEach((element) => print(element.name));
     runGeneticAlgorithm(
-        600, 250, distanceMatrix, timeMatrix, places, nameToIndex);
-
+        550, 300, distanceMatrix, timeMatrix, places, nameToIndex);
+/* 
+    runGeneticAlgorithm(
+        50, 50, distanceMatrix, timeMatrix, places, nameToIndex); */
     //PROBANDO EL METODO
     //generateInitialPopulationMain(5, getNamesOfPlaces(places));
   }
 
+/*   // Función para calcular el promedio de las distancias
+  double calculateAverageDistance(List<List<double>> distanceMatrix) {
+    double totalDistance = 0.0;
+    int count = 0;
+
+    // Recorremos la matriz para sumar las distancias
+    for (var row in distanceMatrix) {
+      for (var distance in row) {
+        if (distance > 0) {
+          // Ignoramos las distancias de 0 (en la diagonal)
+          totalDistance += distance;
+          count++;
+        }
+      }
+    }
+
+    // Retornamos el promedio si hay distancias, de lo contrario 0
+    return count > 0 ? totalDistance / count : 0.0;
+  }
+ */
   Future<void> showClimaFunction() async {
     isOutdoorIntervals = [];
     groupedData = [];
     int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
 
-    for (int i = 0; i < climateDataList!.length; i += 1) {
+    for (int i = 1; i < climateDataList!.length; i += 1) {
       //print(i);
-      if (i + interval > climateDataList!.length)
+      if ((i + interval) > climateDataList!.length)
         break; // Evita exceder la longitud
 
       // Obtener el subgrupo de datos y hacer el cast explícito
@@ -643,18 +601,39 @@ class _AlgoritmState extends State<Algoritm> {
     double penalty =
         0.0; // Penalización por lugares al aire libre en intervalos no adecuados y mucho mas
     List<String> timeRoute = [];
+    List<double> timeResultPlaces = [];
+    List<String> visitsTimes = [];
+    List<bool> intervals = [];
+    openingsPeriods = [];
+
+    //DEFINIR PENALIZACIONES
+    const double LIGHT_PENALTY = 5;
+    const double MODERATTE_PENALTY = 10;
+    const double HEAVY_PENALTY = 15;
+    const double VERY_HEAVY_PENALTY = 25;
+
+    //DEFINIR PREMIOS
+    const double LIGHT_REWARD = 2;
+    const double MODERATE_REWARD = 5;
+    const double HEAVY_REWARD = 8;
 
     List<String> names = nameToIndex.keys.toList();
 
     int localExtraTime = timeLimit['extraTime']!;
 
-    //verificar si mi lista cointiene -1
+    const double metersToKilometers = 0.001;
 
+    List<List<double>> distanceMatrixInKm = distanceMatrix
+        .map((row) => row.map((value) => value * metersToKilometers).toList())
+        .toList();
+
+    //verificar si mi lista cointiene -1
     if (route.contains('-1') || route.length <= timeLimit['limit']!) {
       route.removeWhere((element) => element == '-1');
       population[populationIndex] = route;
       localExtraTime += 5400;
-      penalty += 12500.0;
+      //penalty += 12500.0;
+      penalty += VERY_HEAVY_PENALTY + VERY_HEAVY_PENALTY;
     }
 
     //Primer recorrido para calcular el timepo total.
@@ -662,22 +641,57 @@ class _AlgoritmState extends State<Algoritm> {
       // Obtener los índices usando el mapa
       int position1 = nameToIndex[route[i]]!;
       int position2 = nameToIndex[route[i + 1]]!;
-      totalTime += timeMatrix[position1][position2];
+      double timeByPlace = timeMatrix[position1][position2];
+      totalTime += timeByPlace;
+      timeResultPlaces.add(timeByPlace);
     }
 
     if (localExtraTime < totalTime) {
       int randomIndex = Random().nextInt(route.length - 1) + 1;
       route.removeAt(randomIndex);
       population[populationIndex] = route;
-      penalty += 12500.0;
+      //penalty += 12500.0;
+      penalty += VERY_HEAVY_PENALTY + VERY_HEAVY_PENALTY;
       localExtraTime += 5400;
     }
+
+    //para calcular la duracion de cada visita.
+    double timeVisit = localExtraTime - totalTime;
+
+    //OBTENER EL TIEMPO DE CADA PUNTO VISITADO.
+    DateTime startTimeLocal = DateTime.parse(dateStart);
+    startTimeLocal =
+        startTimeLocal.add(Duration(seconds: timeResultPlaces[0].round()));
+    int visitDuration = 90 * 60; // 90 minutos en segundos
+
+    // Distribuir el tiempo adicional equitativamente
+    int extraTimePerSite = timeVisit ~/ route.length;
+    DateTime
+        endTimeLocal; //= startTimeLocal.add(Duration(seconds: visitDuration + extraTimePerSite));
+
+    for (int i = 0; i < (route.length - 1); i++) {
+      endTimeLocal = startTimeLocal
+          .add(Duration(seconds: visitDuration + extraTimePerSite));
+      /*  String formattedStartTime = DateFormat('h:mm a').format(startTimeLocal);
+      String formattedEndTime = DateFormat('h:mm a').format(endTimeLocal); */
+      //visitsTimes.add('$formattedStartTime - $formattedEndTime');
+      visitsTimes.add(
+          '${startTimeLocal.toIso8601String()}*${endTimeLocal.toIso8601String()}');
+      startTimeLocal = endTimeLocal;
+      if ((route.length - 1) != (i + 1)) {
+        startTimeLocal = startTimeLocal
+            .add(Duration(seconds: timeResultPlaces[i + 1].round()));
+      }
+    }
+
+    intervals = findMaxPrecipitationProbabilityForEachVisit(
+        climateDataList: climateDataList, visitsTimes: visitsTimes);
 
     for (int i = 0; i < route.length - 1; i++) {
       // Obtener los índices usando el mapa
       int position1 = nameToIndex[route[i]]!;
       int position2 = nameToIndex[route[i + 1]]!;
-      totalDistance += distanceMatrix[position1][position2];
+      totalDistance += distanceMatrixInKm[position1][position2];
       //totalTime += timeMatrix[position1][position2];
 
       if (i == 0) {
@@ -687,49 +701,192 @@ class _AlgoritmState extends State<Algoritm> {
       timeRoute.add(names[position2]);
 
       // Penalización basada en el isOutdoorIntervals solo si no es el startingPoint
-      if (i > 0) {
-        bool isOutdoorPlace = places[position1].isOutdoor;
+
+      bool isOutdoorPlace = places[position2].isOutdoor;
 /*         print(
             "${places[position1].name} con ${places[position1].isOutdoor} ademas intervalo que corresponde ${isOutdoorIntervals[i - 1]}"); */
-        if (isOutdoorPlace != isOutdoorIntervals[i - 1]) {
-          if (isOutdoorIntervals[i - 1] == true) {
-            //print('penalizado leve');
-            //antes estaba en 5
-            penalty += 500.0;
+      if (isOutdoorPlace != intervals[i]) {
+        if (intervals[i] == true) {
+          //print('penalizado leve');
+          //antes estaba en 5
+          //penalty += 500.0;
+          penalty += LIGHT_PENALTY;
+        } else {
+          //print('penalizado grabe');
+          //antes estaba en 25
+          //penalty += 5000.0;
+          penalty += HEAVY_PENALTY;
+        }
+      } else {
+        penalty -= LIGHT_REWARD;
+      }
+
+      if (places[position2].isMandatory) {
+        //antes 50
+        //penalty += 10000;
+        //print('Penalizacion muy grave');
+        //penalty += VERY_HEAVY_PENALTY;
+        penalty -= HEAVY_REWARD;
+      }
+
+      // Dividir el rango en inicio y fin
+      final parts = visitsTimes[i].split('*');
+      if (parts.length != 2) {
+        throw ArgumentError(
+            'El rango de tiempo debe tener el formato correcto: inicio*fin');
+      }
+
+      final startTime = DateTime.parse(parts[0]);
+      bool isOpening = false;
+      bool haveData = false;
+
+      if (places[position2].openingPeriods.isEmpty) {
+        haveData = false;
+      } else {
+        for (OpeningPeriod op in places[position2].openingPeriods) {
+          if (op.isOpen24Hours) {
+            isOpening = true;
+            haveData = true;
+            openingsPeriods.add(op.toString());
+            break;
+          }
+          if (op.openDay == startTime.weekday) {
+            isOpening = op.isOpenForEntireRange(visitsTimes[i]);
+            openingsPeriods.add(op.toString());
+            haveData = true;
+            break;
           } else {
-            //print('penalizado grabe');
-            //antes estaba en 25
-            penalty += 2500.0;
+            isOpening = false;
+            haveData = false;
           }
         }
-
-        if (!places[position1].isMandatory) {
-          //antes 50
-          penalty += 10000;
-          //print('Penalizacion muy grave');
-        }
       }
+
+      if (!isOpening) {
+        //Penalizaicion grave
+        penalty += HEAVY_PENALTY;
+        //penalty += 10000;
+      } else {
+        penalty -= LIGHT_REWARD;
+      }
+
+      if (!haveData) {
+        openingsPeriods.add('ND');
+      }
+      //bool hola = places[position1].openingPeriods
+      //print(hola);
+
+      /*  bool prueba = places[position1]
+            .openingPeriods[startTime.weekday]
+            .isOpenForEntireRange(visitsTimes[i - 1]);
+        print(prueba); */
     }
 
     // Considera el regreso al punto inicial
     int startPosition = nameToIndex[route.first]!;
     int endPosition = nameToIndex[route.last]!;
-    totalDistance += distanceMatrix[endPosition][startPosition];
+    totalDistance += distanceMatrixInKm[endPosition][startPosition];
 
-    //para calcular la duracion de cada visita.
-    double timeVisit = localExtraTime - totalTime;
     timeRoute[0] = '${timeRoute[0]}-$timeVisit';
+
+    //verifica que tenga al menos un sitio de cada interes del usuario
 
     //print(timeRoute);
     //print(totalTime);
+
+    //print(totalDistance);
 
 /*     return totalDistance +
         penalty; // Retorna la distancia total con la penalización */
 
 // IMPORTANTE: NO PONGO EL TIMEPO TOTAL EN EL FITNESS YA QUE VA RELACIONADO CON LA DISTANCIA TOTAL
 // Y PONERLO SERÍA REDUNDANTES Y PERJUDICIAL PARA MIS PENALIDADES.
-    return {'fitness': totalDistance + penalty, 'timeRoute': timeRoute};
+    return {
+      'fitness': totalDistance + penalty,
+      'timeRoute': timeRoute,
+      'groupedData': groupedData,
+      'openingsPeriods': openingsPeriods
+    };
   }
+
+  List<bool> findMaxPrecipitationProbabilityForEachVisit({
+    required List<dynamic>? climateDataList,
+    required List<String> visitsTimes,
+  }) {
+    //final Map<String, int> maxPrecipitations = {};
+    List<bool> intervals = [];
+    List<Map<String, dynamic>> groupedDataLocal = [];
+
+    for (String visitTime in visitsTimes) {
+      // Parsear el intervalo de visitas.
+      final times = visitTime.split('*');
+      final visitStart = DateTime.parse(times[0]);
+      final visitEnd = DateTime.parse(times[1]);
+
+      int maxPrecipitation = 0;
+      int weatherCode = 0;
+
+      // Buscar los datos de clima dentro del rango de la visita.
+      for (var climateEntry in climateDataList!) {
+        final startTime = DateTime.parse(climateEntry['startTime']);
+        final values = climateEntry['values'] as Map<String, dynamic>;
+        final precipitationProbability =
+            values['precipitationProbability'] as int;
+
+        // Verificar si este dato de clima está dentro del intervalo de visita.
+        if (startTime.isAfter(visitStart) && startTime.isBefore(visitEnd)) {
+          // Actualizar la mayor probabilidad encontrada.
+          if (precipitationProbability >= maxPrecipitation) {
+            maxPrecipitation = precipitationProbability;
+            weatherCode = values['weatherCode'];
+          }
+        }
+      }
+
+      groupedDataLocal.add({
+        'startTime': times[0],
+        'endTime': times[1],
+        'maxPrecipitationProbability': maxPrecipitation,
+        'code': weatherCode,
+      });
+
+      groupedData = groupedDataLocal;
+
+      intervals.add(maxPrecipitation <= 10); //30
+
+      // Guardar el máximo para este intervalo.
+      //maxPrecipitations[visitTime] = maxPrecipitation;
+    }
+
+    return intervals;
+  }
+
+/*   void getVisitsTimes() {
+    DateTime startTimeLocal = DateTime.parse(dateStart);
+    startTimeLocal =
+        startTimeLocal.add(Duration(seconds: timeResultPlaces[0].round()));
+    int visitDuration = 90 * 60; // 90 minutos en segundos
+
+    // Distribuir el tiempo adicional equitativamente
+    int extraTimePerSite = additionalTime ~/ resultPlaces.length;
+    DateTime
+        endTimeLocal; //= startTimeLocal.add(Duration(seconds: visitDuration + extraTimePerSite));
+
+    for (int i = 0; i < resultPlaces.length; i++) {
+      endTimeLocal = startTimeLocal
+          .add(Duration(seconds: visitDuration + extraTimePerSite));
+      String formattedStartTime = DateFormat('h:mm a').format(startTimeLocal);
+      String formattedEndTime = DateFormat('h:mm a').format(endTimeLocal);
+      visitsTimes.add('$formattedStartTime - $formattedEndTime');
+      startTimeLocal = endTimeLocal;
+      if (resultPlaces.length != (i + 1)) {
+        startTimeLocal = startTimeLocal
+            .add(Duration(seconds: timeResultPlaces[i + 1].round()));
+      }
+    }
+    //currentTime = endTimeLocal.toIso8601String();
+    //return '$formattedStartTime - $formattedEndTime';
+  } */
 
   List<String> selection(
       List<List<String>> population, List<double> fitnessValues) {
@@ -951,6 +1108,11 @@ class _AlgoritmState extends State<Algoritm> {
         bestRouteAll['route'] = bestRooute;
         bestRouteAll['fitness'] = minFitnessValue;
         bestRouteAll['timeRoute'] = bestTimeRoute;
+        //Estan mal echos....
+        PreferencesProvider.instance.groupedData =
+            fitnessResults[bestSolutionIndex]['groupedData'];
+        PreferencesProvider.instance.setOpeningsPeriods(
+            fitnessResults[bestSolutionIndex]['openingsPeriods']);
       }
 
       List<List<String>> newGeneration = [];

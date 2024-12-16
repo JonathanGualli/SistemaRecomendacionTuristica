@@ -22,6 +22,7 @@ class PreferencesProvider extends ChangeNotifier {
       List.empty(growable: true); // Resultado final
   List<Map<String, dynamic>> _groupedData = [];
   double _additionalTime = 0;
+  List<String> _openingsPeriods = [];
 
   //Getters
 
@@ -85,6 +86,10 @@ class PreferencesProvider extends ChangeNotifier {
 
   double getAdditionalTime() {
     return _additionalTime;
+  }
+
+  List<String> getOpeningsPeriods() {
+    return _openingsPeriods;
   }
 
   // Getters
@@ -158,6 +163,11 @@ class PreferencesProvider extends ChangeNotifier {
 
   void setTimeResultPlaces(List<double> timeResultPlaces) {
     _timeResultPlaces = timeResultPlaces;
+    notifyListeners();
+  }
+
+  void setOpeningsPeriods(List<String> openingsPeriods) {
+    _openingsPeriods = openingsPeriods;
     notifyListeners();
   }
 
