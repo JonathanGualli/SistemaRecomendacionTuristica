@@ -38,6 +38,7 @@ class _PoisInformationState extends State<PoisInformation> {
       "art_gallery"; // no importa, no afecta se actualiara luego a los tipos de la lista types.
 
   String jsonResponse = '';
+  GoogleMapController? _mapController; // Controlador del mapa
 
   void updateScreen() {
     setState(() {
@@ -92,7 +93,9 @@ class _PoisInformationState extends State<PoisInformation> {
                       target: initialLocation, //Definida por el turista
                       zoom: 14.0,
                     ),
-                    onMapCreated: (GoogleMapController controller) {},
+                    onMapCreated: (GoogleMapController controller) {
+                      _mapController = controller;
+                    },
                     zoomControlsEnabled: true,
                     compassEnabled: true,
                     circles: {
@@ -226,7 +229,17 @@ class _PoisInformationState extends State<PoisInformation> {
                                   ],
                                 ),
                                 onTap: () {
-                                  print(place.toJson());
+                                  _mapController?.animateCamera(
+                                    CameraUpdate.newCameraPosition(
+                                      CameraPosition(
+                                        target: LatLng(
+                                          place.coordinates.latitude,
+                                          place.coordinates.longitude,
+                                        ),
+                                        zoom: 16.0, // Ajusta el nivel de zoom
+                                      ),
+                                    ),
+                                  );
                                 },
                               ),
                             );
@@ -498,10 +511,6 @@ class _PoisInformationState extends State<PoisInformation> {
           headers: headers,
           body: body,
         );
-/* 
-        debugPrint(response.statusCode.toString());
-        debugPrint(response.body);
-        print(response.body.isEmpty); */
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
 
@@ -584,19 +593,8 @@ class _PoisInformationState extends State<PoisInformation> {
                   googleMapsUri: googleMapsUri,
                   openingPeriods: openingPeriods,
                 );
-
-                //Agregar a la lista de lugares y al conjunto de nombres
                 allPLaces.add(newPlace);
                 addedPlaceNames.add(place['id']);
-
-                /*  if (name == 'Museo del Louvre' &&
-                    !addedPlaceNames.contains('Louvre Museum')) {
-                  addedPlaceNames.add('Louvre Museum');
-                }
-                if (name == 'Louvre Museum' &&
-                    !addedPlaceNames.contains('Museo del Louvre')) {
-                  addedPlaceNames.add('Museo del Louvre');
-                } */
               }
 
               return Marker(
@@ -613,31 +611,6 @@ class _PoisInformationState extends State<PoisInformation> {
         }
         await Future.delayed(const Duration(seconds: 2));
       }
-/*       if (PreferencesProvider.instance.getSpecificPoiPreferences() != null) {
-        List<PlaceData> specificPlaces =
-            PreferencesProvider.instance.getSpecificPoiPreferences()!;
-        allMarkers.addAll(
-          specificPlaces.map(
-            (place) {
-              //Verificamos si un lugar ya ha sido agregado
-              if (!addedPlaceNames.contains(place.name)) {
-                //Agregar a la lista de lugares y al conjunto de nombres
-                allPLaces.add(place);
-                addedPlaceNames.add(place.name);
-              }
-              return Marker(
-                markerId: MarkerId(place.name),
-                position: place.coordinates,
-                infoWindow: InfoWindow(
-                  title: place.name,
-                  snippet: 'Rating: ${place.rating}',
-                ),
-              );
-            },
-          ),
-        );
-      } */
-
       setState(() {
         markers = allMarkers;
         markers.add(Marker(

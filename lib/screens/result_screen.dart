@@ -231,7 +231,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     target: initialLocation,
                     zoom: 14.0,
                   ),
-                  zoomControlsEnabled: false,
+                  zoomControlsEnabled: true,
                   compassEnabled: true,
                   circles: {
                     Circle(
@@ -244,7 +244,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     )
                   },
                 ),
-                Positioned(
+                /* Positioned(
                   bottom: 10,
                   right: 10,
                   child: FloatingActionButton(
@@ -258,7 +258,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     backgroundColor: Colors.blueAccent,
                     child: const Icon(Icons.my_location),
                   ),
-                ),
+                ), */
               ],
             ),
           ),

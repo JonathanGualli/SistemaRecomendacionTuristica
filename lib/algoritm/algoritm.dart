@@ -5,7 +5,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:tesis_v2/models/opening_period_model.dart';
 import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
@@ -23,6 +22,8 @@ class Algoritm extends StatefulWidget {
 }
 
 class _AlgoritmState extends State<Algoritm> {
+  bool isLoading = true;
+
   LatLng startPoint = PreferencesProvider.instance.getInitialLocation()!;
   List<PlaceData> places = [];
   List<PlaceData> resultPlaces = List.empty(growable: true);
@@ -77,10 +78,9 @@ class _AlgoritmState extends State<Algoritm> {
   @override
   void initState() {
     super.initState();
-    fetchClimateData();
     places = PreferencesProvider.instance.getPlaces()!;
     print(places.length);
-
+    //fetchClimateData();
     // Crea una lista temporal para acumular los lugares que deseas eliminar
     List<PlaceData> placesToRemove = [];
 
@@ -126,6 +126,11 @@ class _AlgoritmState extends State<Algoritm> {
         openingPeriods: List.empty(),
       ),
     );
+    fetchClimateData().then(
+      (value) {
+        startFunction();
+      },
+    );
   }
 
   @override
@@ -133,75 +138,79 @@ class _AlgoritmState extends State<Algoritm> {
     //startPoint = PreferencesProvider.instance.getInitialLocation()!;
     //runAutomaticAlgoritm();
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Center(
-                child: Text("Haciendo la magia"),
-              ),
-              SizedBox(
-                width: 20,
-              ),
-              CircularProgressIndicator()
-            ],
-          ),
-          const SizedBox(
-            height: 30,
-          ),
-          ElevatedButton(
-            onPressed: () {
-              startFunction();
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Center(
+                      child: Text("Haciendo la magia"),
+                    ),
+                    SizedBox(
+                      width: 20,
+                    ),
+                    CircularProgressIndicator()
+                  ],
+                ),
+                const SizedBox(
+                  height: 30,
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    startFunction();
 
-              //PROBANDO EL METODO
-              //generateInitialPopulationMain(5, getNamesOfPlaces(places));
-            },
-            child: const Text("Empezar"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              print(PreferencesProvider.instance.getInitialLocation());
-            },
-            child: const Text("mostrar punto de partida"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              showClimaFunction();
-            },
-            child: const Text("mostrar clima"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              printPlaceData(places);
-            },
-            child: Text('mostrar sitios'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              showResultFunction();
-            },
-            child: Text("Ver resultado final "),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              /* climateDataList!.forEach(
+                    //PROBANDO EL METODO
+                    //generateInitialPopulationMain(5, getNamesOfPlaces(places));
+                  },
+                  child: const Text("Empezar"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    print(PreferencesProvider.instance.getInitialLocation());
+                  },
+                  child: const Text("mostrar punto de partida"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    showClimaFunction();
+                  },
+                  child: const Text("mostrar clima"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    printPlaceData(places);
+                  },
+                  child: Text('mostrar sitios'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    showResultFunction();
+                  },
+                  child: Text("Ver resultado final "),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    /* climateDataList!.forEach(
                 (element) {
                   print(element);
                 },
               );
               print(climateDataList!.length); */
-              //String dateStart = '2024-11-12T08:00:00.000Z';
+                    //String dateStart = '2024-11-12T08:00:00.000Z';
 
-              //String dateEnd = '2024-11-12T10:30:00.000Z';
+                    //String dateEnd = '2024-11-12T10:30:00.000Z';
 
-              //print(calculateTotalHours(dateStart, dateEnd));
-              //print(climateDataList!.length);
+                    //print(calculateTotalHours(dateStart, dateEnd));
+                    //print(climateDataList!.length);
 
-              //int limit = 0;
+                    //int limit = 0;
 
-              /*  List<int> climateDataList = [
+                    /*  List<int> climateDataList = [
                 1,
                 2,
                 3,
@@ -242,46 +251,46 @@ class _AlgoritmState extends State<Algoritm> {
               }
 
               print(timeLimit); */
-              print(climateDataList);
-            },
-            child: Text("MOSTRAR COSAS"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              int limit = 0;
-              if ((climateDataList!.length - 1) % 3 == 0) {
-                limit = ((climateDataList!.length - 1) ~/ 3) - 1;
-              } else {
-                limit = (climateDataList!.length - 1) ~/ 3;
-              }
-              List<String> names = getNamesOfPlaces(places);
-              List<List<String>> population =
-                  generateInitialPopulationMain(5, names, limit);
-              population.forEach(
-                (element) {
-                  print("longitud ${element.length}");
-                  print(element);
-                },
-              );
-            },
-            child: Text("Poblacion inicial"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              for (PlaceData place in places) {
-                if (place.name != 'startingPoint') {
-                  print(place.name);
-                  print(place.openingPeriods.toString());
-                  print(place.weekdayDescriptions);
-                  print(place.openingPeriods[2].isOpenAt(DateTime.now()));
-                  print('---------------------------------------------');
-                }
-              }
-            },
-            child: Text("Horarios de apertura"),
-          ),
-        ],
-      ),
+                    print(climateDataList);
+                  },
+                  child: Text("MOSTRAR COSAS"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    int limit = 0;
+                    if ((climateDataList!.length - 1) % 3 == 0) {
+                      limit = ((climateDataList!.length - 1) ~/ 3) - 1;
+                    } else {
+                      limit = (climateDataList!.length - 1) ~/ 3;
+                    }
+                    List<String> names = getNamesOfPlaces(places);
+                    List<List<String>> population =
+                        generateInitialPopulationMain(5, names, limit);
+                    population.forEach(
+                      (element) {
+                        print("longitud ${element.length}");
+                        print(element);
+                      },
+                    );
+                  },
+                  child: Text("Poblacion inicial"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    for (PlaceData place in places) {
+                      if (place.name != 'startingPoint') {
+                        print(place.name);
+                        print(place.openingPeriods.toString());
+                        print(place.weekdayDescriptions);
+                        print(place.openingPeriods[2].isOpenAt(DateTime.now()));
+                        print('---------------------------------------------');
+                      }
+                    }
+                  },
+                  child: Text("Horarios de apertura"),
+                ),
+              ],
+            ),
     );
   }
 
@@ -852,7 +861,7 @@ class _AlgoritmState extends State<Algoritm> {
 
       groupedData = groupedDataLocal;
 
-      intervals.add(maxPrecipitation <= 10); //30
+      intervals.add(maxPrecipitation <= 25); //30
 
       // Guardar el máximo para este intervalo.
       //maxPrecipitations[visitTime] = maxPrecipitation;
@@ -1148,6 +1157,9 @@ class _AlgoritmState extends State<Algoritm> {
     print(
         'La mejor ruta encontrada con fitness time: ${bestRouteAll['fitness']}, ${bestRouteAll['timeRoute']}');
 
+    setState(() {
+      isLoading = false;
+    });
     //Mostrar informacion de si e al aire libre o no.
     /* for (String placeName in bestRouteAll['route']) {
       if (placeName != 'startingPoint') {

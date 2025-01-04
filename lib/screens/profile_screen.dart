@@ -91,6 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 Expanded(
+                                  flex: 5,
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     crossAxisAlignment:
@@ -146,17 +147,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     ),
                                                   ),
                                                   const Spacer(),
-                                                  /*  Checkbox(
-                                  value: _lugaresSeleccionados[lugar['type']],
-                                  onChanged: (bool? value) {
-                                    setState(() {
-                                      _lugaresSeleccionados[lugar['type']] =
-                                          value!;
-                                      //imprimirSeleccionados();
-                                    });
-                                  },
-                                  activeColor: Colors.purple,
-                                                                ), */
                                                 ],
                                               ),
                                             );
@@ -189,15 +179,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ],
                                   ),
                                 ),
-                                /*  SizedBox(
-                                  height: 200,
-                                ), */
-                                const Text(
-                                  "Mis itinerarios",
-                                  style: TextStyle(
-                                      fontSize: 25,
-                                      color: Colors.purple,
-                                      fontWeight: FontWeight.bold),
+                                const SizedBox(
+                                  height: 35,
+                                ),
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "Mis itinerarios",
+                                        style: TextStyle(
+                                            fontSize: 25,
+                                            color: Colors.purple,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 15,
+                                          left: 45,
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: const Text(
+                                                "Itinerario generado 1",
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              height: 15,
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: const Text(
+                                                "Itinerario generado 2",
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

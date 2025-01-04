@@ -16,117 +16,98 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   AuthProvider? _auth;
+
   @override
   Widget build(BuildContext context) {
     _auth = Provider.of<AuthProvider>(context);
     SnackBarService.instance.buildContext = context;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
-      body: Align(
-        alignment: Alignment.center,
-        child: loginPageUI(context),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF4A4A8A), Color(0xFF9BA3EB)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: loginPageUI(context),
+        ),
       ),
     );
   }
 
-  Widget loginPageUI(context) {
+  Widget loginPageUI(BuildContext context) {
     return Container(
-      alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.screenWidth * 0.16,
-        //vertical: Dimensions.screenHeight * 0.05,
+      margin: EdgeInsets.symmetric(
+        horizontal: Dimensions.screenWidth * 0.1,
+      ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          //crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             titulo(),
+            const SizedBox(height: 20),
             imageLogin(),
-            loginWithSocialNetoworks(),
-            loginWIthGuest(context)
+            const SizedBox(height: 20),
+            loginWithSocialNetworks(),
+            const SizedBox(height: 20),
+            loginWithGuestButton(context),
           ],
         ),
       ),
     );
   }
 
-  ElevatedButton loginWIthGuest(context) {
-    return ElevatedButton(
-      onPressed: () async {
-        await _auth!.showGuestLoginConfirmationDialog(context);
-      },
-      style: ButtonStyle(
-          backgroundColor: const WidgetStatePropertyAll(Colors.grey),
-          fixedSize: const WidgetStatePropertyAll(Size(260, 44)),
-          shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 30,
-          ),
-          Text(
-            "Ingresar como invitado",
-            style: TextStyle(fontSize: 15, color: Colors.white),
-          )
-        ],
-      ),
-    );
-  }
-
-  Text titulo() {
+  Widget titulo() {
     return const Text(
-      "Sistema de recomendación turística\nCentrado en el clima",
+      "Sistema de Recomendación Turística\nCentrado en el Clima",
+      textAlign: TextAlign.center,
       style: TextStyle(
-          fontSize: 25, color: Colors.purple, fontWeight: FontWeight.bold),
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF4A4A8A),
+      ),
     );
   }
 
   Widget imageLogin() {
-    return //Padding(
-        //padding: const EdgeInsets.only(bottom: 23),
-        //child:
-        Center(
-      child: Image.asset(
-        "assets/logo.png",
-        height: Dimensions.screenWidth * 0.5,
-      ),
+    return Image.asset(
+      "assets/logo.png",
+      height: Dimensions.screenWidth * 0.4,
     );
   }
 
-  Widget loginWithSocialNetoworks() {
-    return SizedBox(
-      height: Dimensions.screenHeight * 0.2,
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Iniciar sesión con: ",
-            style: TextStyle(
-                color: Colores.morado,
-                fontSize: 20,
-                fontWeight: FontWeight.bold),
+  Widget loginWithSocialNetworks() {
+    return Column(
+      children: [
+        const Text(
+          "Inicia sesión con",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF4A4A8A),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [googleButton(), facebookButton()],
-          ),
-          /* const Center(
-            child: Text("- O -",
-                style: TextStyle(
-                    color: Colores.morado,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold)),
-          ), */
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [googleButton(), facebookButton()],
+        ),
+      ],
     );
   }
 
@@ -135,19 +116,19 @@ class _LoginScreenState extends State<LoginScreen> {
       onPressed: () async {
         await _auth!.signInWithGoogle();
       },
-      style: ButtonStyle(
-          backgroundColor: const WidgetStatePropertyAll(Colores.morado),
-          fixedSize: const WidgetStatePropertyAll(Size(122, 44)),
-          shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.red[400],
+        minimumSize: const Size(140, 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
       child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.g_mobiledata_rounded,
-            color: Colors.white,
-            size: 40,
-          ),
+          Icon(Icons.g_mobiledata, color: Colors.white, size: 32),
+          SizedBox(width: 8),
+          Text("", style: TextStyle(color: Colors.white, fontSize: 16))
         ],
       ),
     );
@@ -158,19 +139,42 @@ class _LoginScreenState extends State<LoginScreen> {
       onPressed: () async {
         await _auth!.signInWithFacebook();
       },
-      style: ButtonStyle(
-          backgroundColor: const WidgetStatePropertyAll(Colores.azul),
-          fixedSize: const WidgetStatePropertyAll(Size(122, 44)),
-          shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue[600],
+        minimumSize: const Size(140, 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
       child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.facebook_sharp,
-            color: Colors.white,
-          ),
+          Icon(Icons.facebook, color: Colors.white),
+          SizedBox(width: 8),
+          Text("", style: TextStyle(color: Colors.white, fontSize: 16))
+        ],
+      ),
+    );
+  }
+
+  Widget loginWithGuestButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () async {
+        await _auth!.showGuestLoginConfirmationDialog(context);
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.grey[700],
+        minimumSize: const Size(double.infinity, 48),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.person, color: Colors.white),
+          SizedBox(width: 10),
+          Text("Ingresar como Invitado", style: TextStyle(color: Colors.white))
         ],
       ),
     );

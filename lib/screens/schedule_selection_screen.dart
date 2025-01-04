@@ -513,6 +513,42 @@ class _ScheduleSelectionScreenState extends State<ScheduleSelectionScreen> {
           endTime = roundedTime;
         }
       });
+
+      // Validación: verifica que la hora de inicio no sea superior a la de fin
+      if (startTime != null && endTime != null) {
+        final int startMinutes = startTime!.hour * 60 + startTime!.minute;
+        final int endMinutes = endTime!.hour * 60 + endTime!.minute;
+
+        if (startMinutes > endMinutes) {
+          SnackBarService.instance.showSnackBar(
+            "La hora de inicio no puede ser superior a la hora de fin",
+            false,
+          );
+
+          // Reinicia la hora actualizada para evitar inconsistencias
+          if (type == 'start') {
+            startTime = null;
+          } else {
+            endTime = null;
+          }
+        }
+
+        // Validación: verifica que haya al menos 6 horas de diferencia
+        if ((endMinutes - startMinutes) < 360) {
+          SnackBarService.instance.showSnackBar(
+            "Debe haber al menos 6 horas de diferencia entre inicio y fin",
+            false,
+          );
+
+          // Reinicia la hora actualizada para evitar inconsistencias
+          if (type == 'start') {
+            startTime = null;
+          } else {
+            endTime = null;
+          }
+          return;
+        }
+      }
     }
   }
 }

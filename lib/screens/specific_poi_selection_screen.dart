@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -361,92 +360,101 @@ class _SpecificPoiSelectionScreenState
                             return ListTile(
                               onTap: () async {
                                 setState(() {
-                                  if (places.any((place) =>
-                                      place.id == listForPlaces[index]['id'])) {
+                                  try {
+                                    if (places.any((place) =>
+                                        place.id ==
+                                        listForPlaces[index]['id'])) {
+                                      SnackBarService.instance.showSnackBar(
+                                          "Lugar ya seleccionado", false);
+                                    } else {
+                                      final regularOpeningHours =
+                                          listForPlaces[index]
+                                              ['regularOpeningHours'];
+                                      final weekdayDescriptions =
+                                          regularOpeningHours != null
+                                              ? List<String>.from(
+                                                  (regularOpeningHours[
+                                                                  'weekdayDescriptions']
+                                                              as List<dynamic>?)
+                                                          ?.map((e) =>
+                                                              e.toString()) ??
+                                                      [])
+                                              : <String>[];
+                                      // Extrae los períodos de apertura en una lista de objetos OpeningPeriod
+                                      final List<OpeningPeriod> openingPeriods =
+                                          (regularOpeningHours?['periods']
+                                                      as List<dynamic>?)
+                                                  ?.map((period) {
+                                                    final open = period['open'];
+                                                    final close =
+                                                        period['close'];
+
+                                                    // Verificar que 'open' y 'close' no sean nulos antes de crear el objeto OpeningPeriod
+                                                    if (open != null &&
+                                                        close != null) {
+                                                      return OpeningPeriod(
+                                                        openDay: open['day'] ??
+                                                            0, // Usa un valor por defecto en caso de que 'day' sea null
+                                                        openHour:
+                                                            open['hour'] ?? 0,
+                                                        openMinute:
+                                                            open['minute'] ?? 0,
+                                                        closeDay:
+                                                            close['day'] ?? 0,
+                                                        closeHour:
+                                                            close['hour'] ?? 0,
+                                                        closeMinute:
+                                                            close['minute'] ??
+                                                                0,
+                                                      );
+                                                    } else {
+                                                      // Si no hay datos de apertura/cierre, retorna null
+                                                      return null;
+                                                    }
+                                                  })
+                                                  .where((period) =>
+                                                      period !=
+                                                      null) // Filtra los elementos nulos
+                                                  .cast<
+                                                      OpeningPeriod>() // Convierte el Iterable a List<OpeningPeriod>
+                                                  .toList() ??
+                                              [];
+                                      final type =
+                                          listForPlaces[index]['primaryType'];
+                                      places.add(
+                                        PlaceData(
+                                          id: listForPlaces[index]['id'],
+                                          name: listForPlaces[index]
+                                              ['displayName']['text'],
+                                          coordinates: LatLng(
+                                              listForPlaces[index]['location']
+                                                  ['latitude'],
+                                              listForPlaces[index]['location']
+                                                  ['longitude']),
+                                          rating: listForPlaces[index]['rating']
+                                              .toString(),
+                                          type: type,
+                                          weekdayDescriptions:
+                                              weekdayDescriptions,
+                                          isOutdoor:
+                                              PlaceTypeClassifier.isOutdoor(
+                                                  type),
+                                          isMandatory: true,
+                                          urlImages: List.empty(growable: true),
+                                          googleMapsUri: listForPlaces[index]
+                                              ['googleMapsUri'],
+                                          openingPeriods: openingPeriods,
+                                        ),
+                                      );
+                                    }
+
+                                    listForPlaces.clear();
+                                    _addressController.clear();
+                                    //places.add(PlaceData(id: , name: name, coordinates: coordinates, rating: rating, type: type))
+                                  } catch (e) {
                                     SnackBarService.instance.showSnackBar(
-                                        "Lugar ya seleccionado", false);
-                                  } else {
-                                    final regularOpeningHours =
-                                        listForPlaces[index]
-                                            ['regularOpeningHours'];
-                                    final weekdayDescriptions =
-                                        regularOpeningHours != null
-                                            ? List<
-                                                String>.from((regularOpeningHours[
-                                                            'weekdayDescriptions']
-                                                        as List<dynamic>?)
-                                                    ?.map(
-                                                        (e) => e.toString()) ??
-                                                [])
-                                            : <String>[];
-                                    // Extrae los períodos de apertura en una lista de objetos OpeningPeriod
-                                    final List<OpeningPeriod> openingPeriods =
-                                        (regularOpeningHours?['periods']
-                                                    as List<dynamic>?)
-                                                ?.map((period) {
-                                                  final open = period['open'];
-                                                  final close = period['close'];
-
-                                                  // Verificar que 'open' y 'close' no sean nulos antes de crear el objeto OpeningPeriod
-                                                  if (open != null &&
-                                                      close != null) {
-                                                    return OpeningPeriod(
-                                                      openDay: open['day'] ??
-                                                          0, // Usa un valor por defecto en caso de que 'day' sea null
-                                                      openHour:
-                                                          open['hour'] ?? 0,
-                                                      openMinute:
-                                                          open['minute'] ?? 0,
-                                                      closeDay:
-                                                          close['day'] ?? 0,
-                                                      closeHour:
-                                                          close['hour'] ?? 0,
-                                                      closeMinute:
-                                                          close['minute'] ?? 0,
-                                                    );
-                                                  } else {
-                                                    // Si no hay datos de apertura/cierre, retorna null
-                                                    return null;
-                                                  }
-                                                })
-                                                .where((period) =>
-                                                    period !=
-                                                    null) // Filtra los elementos nulos
-                                                .cast<
-                                                    OpeningPeriod>() // Convierte el Iterable a List<OpeningPeriod>
-                                                .toList() ??
-                                            [];
-                                    final type =
-                                        listForPlaces[index]['primaryType'];
-                                    places.add(
-                                      PlaceData(
-                                        id: listForPlaces[index]['id'],
-                                        name: listForPlaces[index]
-                                            ['displayName']['text'],
-                                        coordinates: LatLng(
-                                            listForPlaces[index]['location']
-                                                ['latitude'],
-                                            listForPlaces[index]['location']
-                                                ['longitude']),
-                                        rating: listForPlaces[index]['rating']
-                                            .toString(),
-                                        type: type,
-                                        weekdayDescriptions:
-                                            weekdayDescriptions,
-                                        isOutdoor:
-                                            PlaceTypeClassifier.isOutdoor(type),
-                                        isMandatory: true,
-                                        urlImages: List.empty(growable: true),
-                                        googleMapsUri: listForPlaces[index]
-                                            ['googleMapsUri'],
-                                        openingPeriods: openingPeriods,
-                                      ),
-                                    );
+                                        "Lugar no disponible", false);
                                   }
-
-                                  listForPlaces.clear();
-                                  _addressController.clear();
-                                  //places.add(PlaceData(id: , name: name, coordinates: coordinates, rating: rating, type: type))
                                 });
                               },
                               title: Text(
@@ -474,11 +482,13 @@ class _SpecificPoiSelectionScreenState
     double longitude = 0;
     double radius = 0;
 
-    if (PreferencesProvider.instance.getSelectedCity() == 'París') {
+    if (PreferencesProvider.instance.getSelectedCity() == 'Paris') {
+      print('paso por aqui soy paris');
       latitude = 48.8566;
       longitude = 2.3522;
       radius = 9000.0;
     } else {
+      print('paso por aqui soy londres');
       latitude = 51.5074;
       longitude = -0.1278;
       radius = 20000.0;

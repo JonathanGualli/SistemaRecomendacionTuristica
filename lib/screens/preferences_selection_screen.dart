@@ -263,7 +263,7 @@ class _PreferencesSelectionScreenState
                                 .toList();
 
                             if (seleccionados.isNotEmpty &&
-                                seleccionados.length >= 1) {
+                                seleccionados.length >= 3) {
                               //_showBottomSheet();
                               DBService.instance
                                   .updatePreferencesInDB(seleccionados)
