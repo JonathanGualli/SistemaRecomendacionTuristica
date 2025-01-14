@@ -1,8 +1,8 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tesis_v2/models/opening_period_model.dart';
@@ -12,6 +12,39 @@ import 'package:tesis_v2/screens/result_screen.dart';
 import 'package:tesis_v2/services/climate_service.dart';
 import 'package:tesis_v2/services/navigation_service.dart';
 
+class AlgorithmArguments {
+  final int generations;
+  final int populationSize;
+  final List<List<double>> distanceMatrix;
+  final List<List<double>> timeMatrix;
+  final List<PlaceData> places;
+  final Map<String, int> nameToIndex;
+  final List<dynamic>? climateDataList;
+  final String dateStart;
+  final SendPort sendPort;
+
+  AlgorithmArguments({
+    required this.generations,
+    required this.populationSize,
+    required this.distanceMatrix,
+    required this.timeMatrix,
+    required this.places,
+    required this.nameToIndex,
+    required this.climateDataList,
+    required this.dateStart,
+    required this.sendPort,
+  });
+}
+
+/*    Map<String, dynamic> runGeneticAlgorithm(
+  int generations,
+  int populationSize,
+  List<List<double>> distanceMatrix,
+  List<List<double>> timeMatrix,
+  List<PlaceData> places,
+  Map<String, int> nameToIndex,
+  List<dynamic>? climateDataList,
+) */
 class Algoritm extends StatefulWidget {
   const Algoritm({super.key});
 
@@ -21,9 +54,8 @@ class Algoritm extends StatefulWidget {
   State<Algoritm> createState() => _AlgoritmState();
 }
 
-class _AlgoritmState extends State<Algoritm> {
-  bool isLoading = true;
-
+class _AlgoritmState extends State<Algoritm>
+    with SingleTickerProviderStateMixin {
   LatLng startPoint = PreferencesProvider.instance.getInitialLocation()!;
   List<PlaceData> places = [];
   List<PlaceData> resultPlaces = List.empty(growable: true);
@@ -31,25 +63,27 @@ class _AlgoritmState extends State<Algoritm> {
   List<dynamic>? climateDataList;
   final ClimateService _climateService = ClimateService();
   LatLng locationLatLng = PreferencesProvider.instance.getInitialLocation()!;
-  List<bool> isOutdoorIntervals = [];
+  //List<bool> isOutdoorIntervals = [];
   String dateStart = PreferencesProvider.instance.getStartTIme()!;
   String dateEnd = PreferencesProvider.instance.getEndTime()!;
-  List<Map<String, dynamic>> groupedData = [];
-  List<List<String>> population = [];
+/*   List<Map<String, dynamic>> groupedData = []; */
+  //List<List<String>> population = [];
   // Velocidad promedio en m/s es decir 18 km/h
   double averageSpeedMetersPerSecond = 4;
-  List<String> openingsPeriods = [];
+  bool isRunning = true;
+  //List<String> openingsPeriods = [];
 
-  Map<String, dynamic> bestRouteAll = {
-    'route': [],
-    'fitness': double.infinity, //double.infinite? porque lo puse asi? ,,, nose.
-    'timeRoute': [],
-  };
+  Map<String, dynamic> bestRouteAll = {};
 
-  Map<String, int> timeLimit = {
+/*   Map<String, int> timeLimit = {
     'limit': 0, // limite de lugares a visitar.
     'extraTime': 0, // en segundos.
-  };
+  }; */
+
+  // Variables que me sirven para el isolate
+  Isolate? _isolate;
+  final ReceivePort _receivePort = ReceivePort();
+  late StreamSubscription _subscription;
 
   Future<void> fetchClimateData() async {
     climateDataList = await _climateService.fetchClimateData(
@@ -67,8 +101,48 @@ class _AlgoritmState extends State<Algoritm> {
   I/flutter ( 9907): Fecha recorrido 2024-10-21 00:00:00.000
   */
 
+  /* PANTALLA DE CARGA  */
+  int _currentGifIndex = 0;
+  int _currentMessageIndex = 0;
+
+  final List<String> _messages = [
+    "Estamos generando tu itinerario...",
+    "Añadiendo los mejores lugares...",
+    "Calculando rutas óptimas...",
+    "Tu itinerario está casi listo...",
+  ];
+
+  final List<String> _gifs = [
+    'assets/charging1.gif',
+    'assets/charging2.gif',
+  ];
+
+  late Timer _timer;
+  late AnimationController _colorController;
+  late Animation<Color?> _backgroundColor;
+
+  void _startAnimations() {
+    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _currentGifIndex = (_currentGifIndex + 1) % _gifs.length;
+        _currentMessageIndex = (_currentMessageIndex + 1) % _messages.length;
+      });
+    });
+  }
+
   @override
   void dispose() {
+    print('paso por aqui weeee');
+    _isolate?.kill(priority: Isolate.immediate);
+    _subscription.cancel();
+    _receivePort.close();
+    // cerrar lo de pantalla carga
+    _timer.cancel();
+    _colorController.dispose();
     places.removeWhere(
       (place) => place.name == 'startingPoint',
     );
@@ -78,6 +152,27 @@ class _AlgoritmState extends State<Algoritm> {
   @override
   void initState() {
     super.initState();
+    _startAnimations();
+    // Configuración del controlador de animación para el fondo
+    _colorController = AnimationController(
+      duration: const Duration(seconds: 10),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _backgroundColor = ColorTween(
+      begin: Colors.blue,
+      end: Colors.purple,
+    ).animate(_colorController);
+
+    _subscription = _receivePort.listen((message) {
+      if (message is Map<String, dynamic>) {
+        setState(() {
+          bestRouteAll = message;
+          showResultFunction();
+        });
+        //print("Resultado del algoritmo: $message");
+      }
+    });
     places = PreferencesProvider.instance.getPlaces()!;
     print(places.length);
     //fetchClimateData();
@@ -87,7 +182,7 @@ class _AlgoritmState extends State<Algoritm> {
     for (var place in places) {
       if (!place.isMandatory) {
         if (place.rating != 'null') {
-          if (double.parse(place.rating) <= 3.5) {
+          if (double.parse(place.rating) <= 3.1) {
             // Agrega el lugar a la lista de elementos a eliminar
             if (place.isMandatory != true) {
               placesToRemove.add(place);
@@ -138,11 +233,62 @@ class _AlgoritmState extends State<Algoritm> {
     //startPoint = PreferencesProvider.instance.getInitialLocation()!;
     //runAutomaticAlgoritm();
     return Scaffold(
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
-          : Column(
+      body: AnimatedBuilder(
+        animation: _colorController,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _backgroundColor.value!,
+                  Colors.cyan,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: child,
+          );
+        },
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Mostrar el GIF actual con desvanecimiento
+              AnimatedSwitcher(
+                duration: Duration(seconds: 1),
+                child: Image.asset(
+                  _gifs[_currentGifIndex],
+                  key: ValueKey<int>(_currentGifIndex),
+                  height: 200,
+                  width: 200,
+                ),
+              ),
+              SizedBox(height: 20),
+              // Mostrar mensaje actual con desvanecimiento
+              AnimatedSwitcher(
+                duration: Duration(seconds: 1),
+                child: Text(
+                  _messages[_currentMessageIndex],
+                  key: ValueKey<int>(_currentMessageIndex),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              // Indicador de carga con estilo personalizado
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+      /* : Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Row(
@@ -175,12 +321,12 @@ class _AlgoritmState extends State<Algoritm> {
                   },
                   child: const Text("mostrar punto de partida"),
                 ),
-                ElevatedButton(
+                /* ElevatedButton(
                   onPressed: () {
                     showClimaFunction();
                   },
                   child: const Text("mostrar clima"),
-                ),
+                ), */
                 ElevatedButton(
                   onPressed: () {
                     printPlaceData(places);
@@ -251,8 +397,8 @@ class _AlgoritmState extends State<Algoritm> {
               }
 
               print(timeLimit); */
-                    print(climateDataList);
-                  },
+                    //print(climateDataList);
+                    /* },
                   child: Text("MOSTRAR COSAS"),
                 ),
                 ElevatedButton(
@@ -271,7 +417,7 @@ class _AlgoritmState extends State<Algoritm> {
                         print("longitud ${element.length}");
                         print(element);
                       },
-                    );
+                    ); */
                   },
                   child: Text("Poblacion inicial"),
                 ),
@@ -290,11 +436,11 @@ class _AlgoritmState extends State<Algoritm> {
                   child: Text("Horarios de apertura"),
                 ),
               ],
-            ),
+            ), */
     );
   }
 
-  Future<void> showResultFunction() async {
+  void showResultFunction() {
     print(bestRouteAll);
 
     resultPlaces = [];
@@ -334,9 +480,14 @@ class _AlgoritmState extends State<Algoritm> {
     String numberPart = bestRouteAll['timeRoute'][0].toString().split('-').last;
     additionalTime = double.parse(numberPart);
 
+    List<Map<String, dynamic>> groupedData = bestRouteAll['groupedData'];
+    List<String> openingsPeriods = bestRouteAll['openingsPeriods'];
+
     PreferencesProvider.instance.setResultPlaces(resultPlaces);
     PreferencesProvider.instance.setTimeResultPlaces(timeList);
     PreferencesProvider.instance.setAdditionalTime(additionalTime);
+    PreferencesProvider.instance.groupedData = groupedData;
+    PreferencesProvider.instance.setOpeningsPeriods(openingsPeriods);
 
     resultPlaces.forEach(
       (element) {
@@ -347,7 +498,7 @@ class _AlgoritmState extends State<Algoritm> {
     NavigationService.instance.navigatePushName(ResultScreen.routeName);
   }
 
-  Future<void> startFunction() async {
+  void startFunction() async {
     print(places.length);
 
     //List<PlaceData> limitPlaces = filterAndOrderPlaces(places, 8);
@@ -363,7 +514,7 @@ class _AlgoritmState extends State<Algoritm> {
     for (int i = 0; i < places.length; i++) {
       nameToIndex[places[i].name] = i; // Asociar cada nombre con su índice
     }
-    print(nameToIndex);
+    /* print(nameToIndex);
     for (int i = 0; i < distanceMatrix.length; i++) {
       String row = '';
       for (int j = 0; j < distanceMatrix[i].length; j++) {
@@ -371,9 +522,9 @@ class _AlgoritmState extends State<Algoritm> {
             '${distanceMatrix[i][j].toStringAsFixed(2)}\t'; // Ajusta la precisión como prefieras
       }
       debugPrint(row);
-    }
+    } */
 
-    print("Matriz de tiempos");
+/*     print("Matriz de tiempos");
     for (int i = 0; i < places.length; i++) {
       nameToIndex[places[i].name] = i; // Asociar cada nombre con su índice
     }
@@ -385,11 +536,62 @@ class _AlgoritmState extends State<Algoritm> {
             '${timeMatrix[i][j].toStringAsFixed(2)}\t'; // Ajusta la precisión como prefieras
       }
       debugPrint(row);
-    }
+    } */
 
     //places.forEach((element) => print(element.name));
-    runGeneticAlgorithm(
-        550, 300, distanceMatrix, timeMatrix, places, nameToIndex);
+
+    /* final result = await compute(
+      runGeneticAlgorithm,
+      AlgorithmArguments(
+        generations: 550,
+        populationSize: 300,
+        distanceMatrix: distanceMatrix,
+        timeMatrix: timeMatrix,
+        places: places,
+        nameToIndex: nameToIndex,
+        climateDataList: climateDataList,
+        dateStart: dateStart,
+      ),
+    );
+
+    bestRouteAll = result;
+    setState(() {}); */
+
+    try {
+      _isolate?.kill();
+      _isolate = await Isolate.spawn(
+          runGeneticAlgorithm,
+          AlgorithmArguments(
+            generations: 550,
+            populationSize: 300,
+            distanceMatrix: distanceMatrix,
+            timeMatrix: timeMatrix,
+            places: places,
+            nameToIndex: nameToIndex,
+            climateDataList: climateDataList,
+            dateStart: dateStart,
+            sendPort: _receivePort.sendPort,
+          ));
+    } on IsolateSpawnException catch (e) {
+      print(e);
+    }
+
+    /*  bestRouteAll = runGeneticAlgorithm(
+      AlgorithmArguments(
+        generations: 550,
+        populationSize: 300,
+        distanceMatrix: distanceMatrix,
+        timeMatrix: timeMatrix,
+        places: places,
+        nameToIndex: nameToIndex,
+        climateDataList: climateDataList,
+        dateStart: dateStart,
+        sendPort: _receivePort.sendPort,
+      ),
+    ); */
+
+/*     runGeneticAlgorithm(550, 300, distanceMatrix, timeMatrix, places,
+        nameToIndex, climateDataList); */
 /* 
     runGeneticAlgorithm(
         50, 50, distanceMatrix, timeMatrix, places, nameToIndex); */
@@ -417,7 +619,9 @@ class _AlgoritmState extends State<Algoritm> {
     return count > 0 ? totalDistance / count : 0.0;
   }
  */
-  Future<void> showClimaFunction() async {
+
+// funcion inutil que no utilizo.
+  /* Future<void> showClimaFunction() async {
     isOutdoorIntervals = [];
     groupedData = [];
     int interval = 3; // Agrupar cada 3 elementos (1.5 horas)
@@ -479,7 +683,7 @@ class _AlgoritmState extends State<Algoritm> {
     //print(groupedData.length);
 
     PreferencesProvider.instance.groupedData = groupedData;
-  }
+  } */
 
 //FUNCION ANTES DEL PUNTO INICIAL
 /*   List<List<String>> generateInitialPopulationMain(
@@ -514,33 +718,6 @@ class _AlgoritmState extends State<Algoritm> {
 
     return population;
   } */
-
-  List<List<String>> generateInitialPopulationMain(
-      int populationSize, List<String> names, int limit) {
-    List<List<String>> population = [];
-
-    // Remover 'startingPoint' de la lista de nombres
-    List<String> availableNames = List.from(names);
-    availableNames.remove('startingPoint');
-
-    // Asegurarse de que limit no exceda el número de lugares disponibles
-    limit = limit.clamp(0, availableNames.length);
-
-    for (int i = 0; i < populationSize; i++) {
-      // Seleccionar N lugares aleatorios
-      List<String> selectedPlaces =
-          (List.of(availableNames)..shuffle()).sublist(0, limit);
-
-      // Crear una nueva ruta que incluye el startingPoint
-      List<String> newRoute = List.from(selectedPlaces);
-
-      newRoute.insert(0,
-          'startingPoint'); // Insertar el punto de inicio en la primera posición.
-      population.add(newRoute);
-    }
-
-    return population;
-  }
 
 /*   double calculateFitness(List<String> route, List<List<double>> distanceMatrix,
       List<PlaceData> places, List<bool> isOutdoorIntervals) {
@@ -594,7 +771,7 @@ class _AlgoritmState extends State<Algoritm> {
     return totalDistance +
         penalty; // Retorna la distancia total con la penalización
   } */
-
+/* 
   Map<String, dynamic> calculateFitness(
     List<String> route,
     List<List<double>> distanceMatrix,
@@ -816,8 +993,8 @@ class _AlgoritmState extends State<Algoritm> {
       'groupedData': groupedData,
       'openingsPeriods': openingsPeriods
     };
-  }
-
+  } */
+/* 
   List<bool> findMaxPrecipitationProbabilityForEachVisit({
     required List<dynamic>? climateDataList,
     required List<String> visitsTimes,
@@ -868,7 +1045,7 @@ class _AlgoritmState extends State<Algoritm> {
     }
 
     return intervals;
-  }
+  } */
 
 /*   void getVisitsTimes() {
     DateTime startTimeLocal = DateTime.parse(dateStart);
@@ -897,7 +1074,7 @@ class _AlgoritmState extends State<Algoritm> {
     //return '$formattedStartTime - $formattedEndTime';
   } */
 
-  List<String> selection(
+/*   List<String> selection(
       List<List<String>> population, List<double> fitnessValues) {
     int tournamentSize = 3;
     List<int> selected = [];
@@ -908,7 +1085,7 @@ class _AlgoritmState extends State<Algoritm> {
     selected.sort((a, b) => fitnessValues[a].compareTo(fitnessValues[b]));
     return population[selected.first];
   }
-
+ */
 /*   List<String> crossover(List<String> parent1, List<String> parent2) {
     //int start = Random().nextInt(parent1.length);
     int start = Random().nextInt(parent1.length - 2) +
@@ -954,7 +1131,7 @@ class _AlgoritmState extends State<Algoritm> {
   */
 
   //FUNCION DESPUES DEL PUNTO INICIAL
-  List<String> crossover(List<String> parent1, List<String> parent2) {
+/*   List<String> crossover(List<String> parent1, List<String> parent2) {
     int start =
         Random().nextInt(parent1.length - 1) + 1; // Evitar la posición 0
     int end = Random().nextInt(parent1.length - start) + start;
@@ -986,7 +1163,7 @@ class _AlgoritmState extends State<Algoritm> {
     }
 
     return offspring;
-  }
+  } */
 
 // FUNCION ANTES DEL PUNTO INICIAL
 /*   List<String> mutate(List<String> route) {
@@ -1003,7 +1180,7 @@ class _AlgoritmState extends State<Algoritm> {
   } */
 
   // FUNCION DESPUES DEL PUNTO INICIAL
-  List<String> mutate(List<String> route) {
+/*   List<String> mutate(List<String> route) {
     // Generar índices aleatorios dentro de la ruta, evitando el índice 0 (startingPoint)
     int index1 = Random().nextInt(route.length - 1) + 1; // Evitar el índice 0
     int index2 = Random().nextInt(route.length - 1) + 1; // Evitar el índice 0
@@ -1015,7 +1192,7 @@ class _AlgoritmState extends State<Algoritm> {
     route[index2] = temp;
 
     return route;
-  }
+  } */
 
 /*   List<String> mutate(List<String> route) {
     // Solo realiza mutaciones en los lugares intermedios
@@ -1028,157 +1205,10 @@ class _AlgoritmState extends State<Algoritm> {
     return route;
   } */
 
-  List<List<String>> replacePopulation(
+/*   List<List<String>> replacePopulation(
       List<List<String>> population, List<List<String>> newGeneration) {
     return newGeneration;
-  }
-
-  void runGeneticAlgorithm(
-      int generations,
-      int populationSize,
-      List<List<double>> distanceMatrix,
-      List<List<double>> timeMatrix,
-      List<PlaceData> places,
-      //int limit,
-      Map<String, int> nameToIndex) {
-    List<String> names = getNamesOfPlaces(places);
-    //List<String> namesInDoor = getNamesOfPlacesInDoor(places);
-
-    //print(names.length);
-    //print(namesInDoor.length);
-
-/*     List<PlaceData> newPlaces = filterAndOrderPlaces(places, limit);
-    places = newPlaces; */
-
-//FORMA ANTERIOR, DONDE SOLO SE CONSIDERAVA EL LIMIT NO EL TIEMPO EXTRA.
-/*     int limit = 0;
-
-    if ((climateDataList!.length - 1) % 3 == 0) {
-      limit = ((climateDataList!.length - 1) ~/ 3) - 1;
-    } else {
-      limit = (climateDataList!.length - 1) ~/ 3;
-    } */
-
-    if ((climateDataList!.length - 1) % 3 == 0) {
-      timeLimit['limit'] = ((climateDataList!.length - 1) ~/ 3) - 1;
-      timeLimit['extraTime'] = 5400; //en segundos.
-    } else {
-      timeLimit['limit'] = (climateDataList!.length - 1) ~/ 3;
-      if ((climateDataList!.length - 1) % 3 == 1) {
-        timeLimit['extraTime'] = 1800;
-      } else {
-        timeLimit['extraTime'] = 3600;
-      }
-    }
-    // EL tamaño de la poblacion inicial dependera de los intervalos que haya,
-    // el limit.
-
-    population = generateInitialPopulationMain(
-        populationSize, names, timeLimit['limit']!);
-
-    for (int generation = 0; generation < generations; generation++) {
-/*       List<double> fitnessValues = population
-          .map((route) => calculateFitness(route, distanceMatrix, timeMatrix,
-              places, isOutdoorIntervals, nameToIndex))
-          .toList();
-           */
-      List<Map<String, dynamic>> fitnessResults =
-          population.asMap().entries.map((entry) {
-        int index = entry.key; // El índice del elemento en population
-        List<String> route =
-            entry.value; // El elemento actual (la lista `route`)
-
-        // Llamar a calculateFitness con el índice
-        return calculateFitness(
-            route,
-            distanceMatrix,
-            timeMatrix,
-            places,
-            isOutdoorIntervals,
-            nameToIndex,
-            index // Pasar el índice como parámetro adicional
-            );
-      }).toList();
-
-      List<double> fitnessValues =
-          fitnessResults.map((result) => result['fitness'] as double).toList();
-      //List<String> names = getNamesOfPlaces(places);
-      double minFitnessValue = fitnessValues.reduce((a, b) => a < b ? a : b);
-
-      int bestSolutionIndex = fitnessValues.indexOf(minFitnessValue);
-      List<String> bestRooute = population[bestSolutionIndex];
-      List<String> bestTimeRoute =
-          fitnessResults[bestSolutionIndex]['timeRoute'];
-
-      //displayEvolution(generation, bestRooute, minFitnessValue);
-
-      // Comparar y actualizar bestRouteAll
-      if (minFitnessValue < bestRouteAll['fitness']) {
-        bestRouteAll['route'] = bestRooute;
-        bestRouteAll['fitness'] = minFitnessValue;
-        bestRouteAll['timeRoute'] = bestTimeRoute;
-        //Estan mal echos....
-        PreferencesProvider.instance.groupedData =
-            fitnessResults[bestSolutionIndex]['groupedData'];
-        PreferencesProvider.instance.setOpeningsPeriods(
-            fitnessResults[bestSolutionIndex]['openingsPeriods']);
-      }
-
-      List<List<String>> newGeneration = [];
-
-      //Repite el proceso de generar nuevos cromosomas hasta llenar la nueva población
-      for (int i = 0; i < populationSize; i++) {
-        //Selecciona el primer y segundo padre usando la funcion de selección
-        List<String> parent1 = selection(population, fitnessValues);
-        List<String> parent2 = selection(population, fitnessValues);
-        //Genera una descendencia generando un cruce
-        List<String> offspring = crossover(parent1, parent2);
-        //Aplica una mutación con una probabilidad del 10%
-        if (Random().nextDouble() < 0.15) {
-          // Probabilidad de mutación
-          offspring = mutate(offspring);
-        }
-        //Añade descendencia a la nueva generación
-        newGeneration.add(offspring);
-      }
-      //Reemplaza la población actual por la nueva generación
-      population = replacePopulation(population, newGeneration);
-
-      // Asume que la primera ruta en la población es la mejor
-      //List<int> bestRoute = population.first;
-
-      //Calula la aptitud de la mejor ruta
-      //double bestFitness = calculateFitness(bestRoute, distanceMatrix);
-      //Muesta la evolución.
-      //displayEvolution(generation, bestRoute, bestFitness);
-    }
-    print(
-        'La mejor ruta encontrada con fitness: ${bestRouteAll['fitness']}, ${bestRouteAll['route']}');
-    print(
-        'La mejor ruta encontrada con fitness time: ${bestRouteAll['fitness']}, ${bestRouteAll['timeRoute']}');
-
-    setState(() {
-      isLoading = false;
-    });
-    //Mostrar informacion de si e al aire libre o no.
-    /* for (String placeName in bestRouteAll['route']) {
-      if (placeName != 'startingPoint') {
-        // Acceder al índice utilizando el mapa nameToIndex
-        print(placeName);
-        int index = nameToIndex[placeName]!;
-        PlaceData placeData =
-            places[index]; // Acceder a la instancia de PlaceData
-
-        // Ahora puedes acceder a los atributos de placeData
-        print('Nombre: ${placeData.name}');
-        print('¿Es al aire libre?: ${placeData.isOutdoor}');
-
-        resultPlaces.add(placeData);
-
-        // Agrega más atributos según sea necesario
-      }
-    } */
-  }
+  } */
 
   /// Muestra la evolución del mejor camino en cada generación
   void displayEvolution(
@@ -1201,14 +1231,6 @@ class _AlgoritmState extends State<Algoritm> {
       debugPrint('hola: ${place.openingPeriods.toString()}');
       debugPrint('-------------------');
     }
-  }
-
-  List<String> getNamesOfPlaces(List<PlaceData> places) {
-    List<String> names = [];
-    for (var place in places) {
-      names.add(place.name);
-    }
-    return names;
   }
 
   List<String> getNamesOfPlacesInDoor(List<PlaceData> places) {
@@ -1329,7 +1351,7 @@ class _AlgoritmState extends State<Algoritm> {
     return distanceMatrix;
   } */
 
-  List<PlaceData> filterAndOrderPlaces(List<PlaceData> places, int limit) {
+/*   List<PlaceData> filterAndOrderPlaces(List<PlaceData> places, int limit) {
     // Asegura que el startingPoint siempre esté primero en la lista
     List<PlaceData> sortedPlaces = List.from(places);
     PlaceData startingPoint = sortedPlaces.removeAt(0);
@@ -1354,8 +1376,8 @@ class _AlgoritmState extends State<Algoritm> {
     sortedPlaces.insert(0, startingPoint);
 
     return sortedPlaces;
-  }
-
+  } */
+/* 
   double calculateTotalHours(String dateStart, String dateEnd) {
     // Convertir las cadenas a DateTime
     DateTime startDate = DateTime.parse(dateStart);
@@ -1369,5 +1391,509 @@ class _AlgoritmState extends State<Algoritm> {
         difference.inHours.toDouble() + (difference.inMinutes % 60) / 60;
 
     return totalHours;
+  } */
+}
+
+// aqui empieza mi isolate
+
+Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
+  // Definimos datos
+  List<List<String>> population = [];
+  List<bool> isOutdoorIntervals = [];
+  List<String> openingsPeriods = [];
+  List<Map<String, dynamic>> groupedData = [];
+  //String dateStart = PreferencesProvider.instance.getStartTIme()!;
+  Map<String, int> timeLimit = {
+    'limit': 0, // limite de lugares a visitar.
+    'extraTime': 0, // en segundos.
+  };
+  Map<String, dynamic> bestRouteAll = {
+    'route': [],
+    'fitness': double.infinity, //double.infinite? porque lo puse asi? ,,, nose.
+    'timeRoute': [],
+    'groupedData': [],
+    'openingsPeriods': [],
+  };
+
+  // Funciones
+  List<String> getNamesOfPlaces(List<PlaceData> places) {
+    List<String> names = [];
+    for (var place in places) {
+      names.add(place.name);
+    }
+    return names;
   }
+
+  List<List<String>> generateInitialPopulationMain(
+      int populationSize, List<String> names, int limit) {
+    List<List<String>> population = [];
+
+    // Remover 'startingPoint' de la lista de nombres
+    List<String> availableNames = List.from(names);
+    availableNames.remove('startingPoint');
+
+    // Asegurarse de que limit no exceda el número de lugares disponibles
+    limit = limit.clamp(0, availableNames.length);
+
+    for (int i = 0; i < populationSize; i++) {
+      // Seleccionar N lugares aleatorios
+      List<String> selectedPlaces =
+          (List.of(availableNames)..shuffle()).sublist(0, limit);
+
+      // Crear una nueva ruta que incluye el startingPoint
+      List<String> newRoute = List.from(selectedPlaces);
+
+      newRoute.insert(0,
+          'startingPoint'); // Insertar el punto de inicio en la primera posición.
+      population.add(newRoute);
+    }
+
+    return population;
+  }
+
+  List<String> selection(
+      List<List<String>> population, List<double> fitnessValues) {
+    int tournamentSize = 3;
+    List<int> selected = [];
+    for (int i = 0; i < tournamentSize; i++) {
+      int randomIndex = Random().nextInt(population.length);
+      selected.add(randomIndex);
+    }
+    selected.sort((a, b) => fitnessValues[a].compareTo(fitnessValues[b]));
+    return population[selected.first];
+  }
+
+  List<String> crossover(List<String> parent1, List<String> parent2) {
+    int start =
+        Random().nextInt(parent1.length - 1) + 1; // Evitar la posición 0
+    int end = Random().nextInt(parent1.length - start) + start;
+
+    // Crear el offspring con el mismo tamaño que los padres y con el startingPoint fijo
+    List<String> offspring = List.filled(parent1.length, '-1');
+    offspring[0] =
+        'startingPoint'; // Asegurar que el startingPoint esté en la primera posición
+
+    // Copiar la porción del primer padre (evitando la primera posición)
+    for (int i = start; i < end; i++) {
+      offspring[i] = parent1[i];
+    }
+
+    // Llenar los espacios vacíos con genes del segundo padre (evitar duplicados)
+    int currentIndex = end % parent1.length;
+
+    for (int i = 1; i < parent2.length; i++) {
+      // Empezar desde el índice 1 para evitar el startingPoint
+      if (!offspring.contains(parent2[i]) && offspring.contains('-1')) {
+        offspring[currentIndex] = parent2[i];
+        currentIndex = (currentIndex + 1) % parent1.length;
+
+        // Si currentIndex es 0, saltar a la siguiente posición (1) para no sobrescribir el startingPoint
+        if (currentIndex == 0) {
+          currentIndex = 1;
+        }
+      }
+    }
+
+    return offspring;
+  }
+
+  List<String> mutate(List<String> route) {
+    // Generar índices aleatorios dentro de la ruta, evitando el índice 0 (startingPoint)
+    int index1 = Random().nextInt(route.length - 1) + 1; // Evitar el índice 0
+    int index2 = Random().nextInt(route.length - 1) + 1; // Evitar el índice 0
+
+    // Crear una ruta temporal para hacer el swap
+    String temp = route[index1];
+    // Intercambiar los valores de index1 e index2
+    route[index1] = route[index2];
+    route[index2] = temp;
+
+    return route;
+  }
+
+  List<List<String>> replacePopulation(
+      List<List<String>> population, List<List<String>> newGeneration) {
+    return newGeneration;
+  }
+
+  List<bool> findMaxPrecipitationProbabilityForEachVisit({
+    required List<dynamic>? climateDataList,
+    required List<String> visitsTimes,
+  }) {
+    //final Map<String, int> maxPrecipitations = {};
+    List<bool> intervals = [];
+    List<Map<String, dynamic>> groupedDataLocal = [];
+
+    for (String visitTime in visitsTimes) {
+      // Parsear el intervalo de visitas.
+      final times = visitTime.split('*');
+      final visitStart = DateTime.parse(times[0]);
+      final visitEnd = DateTime.parse(times[1]);
+
+      int maxPrecipitation = 0;
+      int weatherCode = 0;
+
+      // Buscar los datos de clima dentro del rango de la visita.
+      for (var climateEntry in climateDataList!) {
+        final startTime = DateTime.parse(climateEntry['startTime']);
+        if (startTime.isAfter(visitStart) && startTime.isBefore(visitEnd)) {
+          final values = climateEntry['values'] as Map<String, dynamic>;
+          final precipitationProbability =
+              values['precipitationProbability'] as int;
+          // Actualizar la mayor probabilidad encontrada.
+          if (precipitationProbability >= maxPrecipitation) {
+            maxPrecipitation = precipitationProbability;
+            weatherCode = values['weatherCode'];
+          }
+        }
+      }
+      groupedDataLocal.add({
+        'startTime': times[0],
+        'endTime': times[1],
+        'maxPrecipitationProbability': maxPrecipitation,
+        'code': weatherCode,
+      });
+      groupedData = groupedDataLocal;
+      intervals.add(maxPrecipitation >= 25);
+    }
+
+    return intervals;
+  }
+
+  Map<String, dynamic> calculateFitness(
+    List<String> route,
+    List<List<double>> distanceMatrix,
+    List<List<double>> timeMatrix,
+    List<PlaceData> places,
+    List<bool> isOutdoorIntervals,
+    Map<String, int> nameToIndex,
+    int populationIndex,
+  ) {
+    route = List.from(route);
+    double totalDistance = 0.0;
+    double totalTime = 0.0;
+    double penalty =
+        0.0; // Penalización por lugares al aire libre en intervalos no adecuados y mucho mas
+    List<String> timeRoute = [];
+    List<double> timeResultPlaces = [];
+    List<String> visitsTimes = [];
+    List<bool> intervals = [];
+    openingsPeriods = [];
+
+    //DEFINIR PENALIZACIONES
+    const double LIGHT_PENALTY = 5;
+    const double MODERATTE_PENALTY = 10;
+    const double HEAVY_PENALTY = 15;
+    const double VERY_HEAVY_PENALTY = 25;
+
+    //DEFINIR PREMIOSS
+    const double LIGHT_REWARD = 2;
+    const double MODERATE_REWARD = 5;
+    const double HEAVY_REWARD = 8;
+
+    List<String> names = nameToIndex.keys.toList();
+
+    int localExtraTime = timeLimit['extraTime']!;
+
+    double hola = LIGHT_PENALTY + HEAVY_PENALTY + MODERATE_REWARD;
+
+    const double metersToKilometers = 0.001;
+
+    List<List<double>> distanceMatrixInKm = distanceMatrix
+        .map((row) => row.map((value) => value * metersToKilometers).toList())
+        .toList();
+
+    //verificar si mi lista cointiene -1
+    if (route.contains('-1') || route.length <= timeLimit['limit']!) {
+      route.removeWhere((element) => element == '-1');
+      population[populationIndex] = route;
+      localExtraTime += 5400;
+      //penalty += 12500.0;
+      penalty += VERY_HEAVY_PENALTY + VERY_HEAVY_PENALTY;
+    }
+
+    //print(nameToIndex);
+
+    //Primer recorrido para calcular el timepo total.
+    for (int i = 0; i < route.length - 1; i++) {
+      // Obtener los índices usando el mapa
+      int position1 = nameToIndex[route[i]]!;
+      int position2 = nameToIndex[route[i + 1]]!;
+      double timeByPlace = timeMatrix[position1][position2];
+      totalTime += timeByPlace;
+      timeResultPlaces.add(timeByPlace);
+    }
+
+    if (localExtraTime < totalTime) {
+      int randomIndex = Random().nextInt(route.length - 1) + 1;
+      route.removeAt(randomIndex);
+      population[populationIndex] = route;
+      penalty += VERY_HEAVY_PENALTY + VERY_HEAVY_PENALTY;
+      localExtraTime += 5400;
+    }
+
+    //para calcular la duracion de cada visita.
+    double timeVisit = localExtraTime - totalTime;
+
+    //OBTENER EL TIEMPO DE CADA PUNTO VISITADO.
+    DateTime startTimeLocal = DateTime.parse(arguments.dateStart);
+    startTimeLocal =
+        startTimeLocal.add(Duration(seconds: timeResultPlaces[0].round()));
+    int visitDuration = 90 * 60; // 90 minutos en segundos
+
+    // Distribuir el tiempo adicional equitativamente
+    int extraTimePerSite = timeVisit ~/ route.length;
+    DateTime endTimeLocal;
+
+    for (int i = 0; i < (route.length - 1); i++) {
+      endTimeLocal = startTimeLocal
+          .add(Duration(seconds: visitDuration + extraTimePerSite));
+      visitsTimes.add(
+          '${startTimeLocal.toIso8601String()}*${endTimeLocal.toIso8601String()}');
+      startTimeLocal = endTimeLocal;
+      if ((route.length - 1) != (i + 1)) {
+        startTimeLocal = startTimeLocal
+            .add(Duration(seconds: timeResultPlaces[i + 1].round()));
+      }
+    }
+
+    intervals = findMaxPrecipitationProbabilityForEachVisit(
+        climateDataList: arguments.climateDataList, visitsTimes: visitsTimes);
+
+    for (int i = 0; i < route.length - 1; i++) {
+      // Obtener los índices usando el mapa
+      int position1 = nameToIndex[route[i]]!;
+      int position2 = nameToIndex[route[i + 1]]!;
+      totalDistance += distanceMatrixInKm[position1][position2];
+      //totalTime += timeMatrix[position1][position2];
+
+      if (i == 0) {
+        timeRoute.add(names[position1]);
+      }
+      timeRoute.add("${timeMatrix[position1][position2]}");
+      timeRoute.add(names[position2]);
+
+      // Penalización basada en el isOutdoorIntervals solo si no es el startingPoint
+      bool isOutdoorPlace = places[position2].isOutdoor;
+      if (isOutdoorPlace == intervals[i]) {
+        if (isOutdoorPlace == true) {
+          penalty += VERY_HEAVY_PENALTY;
+        } else {
+          penalty += MODERATTE_PENALTY;
+        }
+      } else {
+        penalty -= LIGHT_REWARD;
+      }
+
+      if (places[position2].isMandatory) {
+        penalty -= HEAVY_REWARD;
+      }
+
+      // Dividir el rango en inicio y fin
+      final parts = visitsTimes[i].split('*');
+      if (parts.length != 2) {
+        throw ArgumentError(
+            'El rango de tiempo debe tener el formato correcto: inicio*fin');
+      }
+
+      final startTime = DateTime.parse(parts[0]);
+      bool isOpening = false;
+      bool haveData = false;
+
+      if (places[position2].openingPeriods.isEmpty) {
+        haveData = false;
+      } else {
+        for (OpeningPeriod op in places[position2].openingPeriods) {
+          if (op.isOpen24Hours) {
+            isOpening = true;
+            haveData = true;
+            openingsPeriods.add(op.toString());
+            break;
+          }
+          if (op.openDay == startTime.weekday) {
+            isOpening = op.isOpenForEntireRange(visitsTimes[i]);
+            openingsPeriods.add(op.toString());
+            haveData = true;
+            break;
+          } else {
+            isOpening = false;
+            haveData = false;
+          }
+        }
+      }
+
+      if (!isOpening) {
+        penalty += VERY_HEAVY_PENALTY;
+      } else {
+        penalty -= LIGHT_REWARD;
+      }
+
+      if (!haveData) {
+        openingsPeriods.add('ND');
+        penalty += MODERATTE_PENALTY;
+      }
+    }
+
+    // Considera el regreso al punto inicial
+    int startPosition = nameToIndex[route.first]!;
+    int endPosition = nameToIndex[route.last]!;
+    totalDistance += distanceMatrixInKm[endPosition][startPosition];
+
+    timeRoute[0] = '${timeRoute[0]}-$timeVisit';
+
+    //verifica que tenga al menos un sitio de cada interes del usuario
+
+    //print(timeRoute);
+    //print(totalTime);
+
+    //print(totalDistance);
+
+/*     return totalDistance +
+        penalty; // Retorna la distancia total con la penalización */
+
+// IMPORTANTE: NO PONGO EL TIMEPO TOTAL EN EL FITNESS YA QUE VA RELACIONADO CON LA DISTANCIA TOTAL
+// Y PONERLO SERÍA REDUNDANTES Y PERJUDICIAL PARA MIS PENALIDADES.
+    return {
+      'fitness': totalDistance + penalty,
+      'timeRoute': timeRoute,
+      'groupedData': groupedData,
+      'openingsPeriods': openingsPeriods
+    };
+  }
+
+  // codigo como tal.
+
+  List<String> names = getNamesOfPlaces(arguments.places);
+  //List<String> namesInDoor = getNamesOfPlacesInDoor(places);
+
+  //print(names.length);
+  //print(namesInDoor.length);
+
+/*     List<PlaceData> newPlaces = filterAndOrderPlaces(places, limit);
+    places = newPlaces; */
+
+//FORMA ANTERIOR, DONDE SOLO SE CONSIDERAVA EL LIMIT NO EL TIEMPO EXTRA.
+/*     int limit = 0;
+
+    if ((climateDataList!.length - 1) % 3 == 0) {
+      limit = ((climateDataList!.length - 1) ~/ 3) - 1;
+    } else {
+      limit = (climateDataList!.length - 1) ~/ 3;
+    } */
+
+  if ((arguments.climateDataList!.length - 1) % 3 == 0) {
+    timeLimit['limit'] = ((arguments.climateDataList!.length - 1) ~/ 3) - 1;
+    timeLimit['extraTime'] = 5400; //en segundos.
+  } else {
+    timeLimit['limit'] = (arguments.climateDataList!.length - 1) ~/ 3;
+    if ((arguments.climateDataList!.length - 1) % 3 == 1) {
+      timeLimit['extraTime'] = 1800;
+    } else {
+      timeLimit['extraTime'] = 3600;
+    }
+  }
+  // EL tamaño de la poblacion inicial dependera de los intervalos que haya,
+  // el limit.
+
+  population = generateInitialPopulationMain(
+      arguments.populationSize, names, timeLimit['limit']!);
+
+  for (int generation = 0; generation < arguments.generations; generation++) {
+/*       List<double> fitnessValues = population
+          .map((route) => calculateFitness(route, distanceMatrix, timeMatrix,
+              places, isOutdoorIntervals, nameToIndex))
+          .toList();
+           */
+    //print(arguments.nameToIndex);
+    List<Map<String, dynamic>> fitnessResults =
+        population.asMap().entries.map((entry) {
+      int index = entry.key; // El índice del elemento en population
+      List<String> route = entry.value; // El elemento actual (la lista `route`)
+
+      // Llamar a calculateFitness con el índice
+      return calculateFitness(
+          route,
+          arguments.distanceMatrix,
+          arguments.timeMatrix,
+          arguments.places,
+          isOutdoorIntervals,
+          arguments.nameToIndex,
+          index // Pasar el índice como parámetro adicional
+          );
+    }).toList();
+
+    List<double> fitnessValues =
+        fitnessResults.map((result) => result['fitness'] as double).toList();
+    double minFitnessValue = fitnessValues.reduce((a, b) => a < b ? a : b);
+
+    int bestSolutionIndex = fitnessValues.indexOf(minFitnessValue);
+    List<String> bestRooute = population[bestSolutionIndex];
+    List<String> bestTimeRoute = fitnessResults[bestSolutionIndex]['timeRoute'];
+    List<Map<String, dynamic>> groupedData =
+        fitnessResults[bestSolutionIndex]['groupedData'];
+    List<String> openingsPeriods =
+        fitnessResults[bestSolutionIndex]['openingsPeriods'];
+
+    if (minFitnessValue < bestRouteAll['fitness']) {
+      bestRouteAll['route'] = bestRooute;
+      bestRouteAll['fitness'] = minFitnessValue;
+      bestRouteAll['timeRoute'] = bestTimeRoute;
+      bestRouteAll['groupedData'] = groupedData;
+      bestRouteAll['openingsPeriods'] = openingsPeriods;
+    }
+
+    List<List<String>> newGeneration = [];
+
+    //Repite el proceso de generar nuevos cromosomas hasta llenar la nueva población
+    for (int i = 0; i < arguments.populationSize; i++) {
+      //Selecciona el primer y segundo padre usando la funcion de selección
+      List<String> parent1 = selection(population, fitnessValues);
+      List<String> parent2 = selection(population, fitnessValues);
+      //Genera una descendencia generando un cruce
+      List<String> offspring = crossover(parent1, parent2);
+      //Aplica una mutación con una probabilidad del 10%
+      if (Random().nextDouble() < 0.15) {
+        // Probabilidad de mutación
+        offspring = mutate(offspring);
+      }
+      //Añade descendencia a la nueva generación
+      newGeneration.add(offspring);
+    }
+    //Reemplaza la población actual por la nueva generación
+    population = replacePopulation(population, newGeneration);
+
+    // Asume que la primera ruta en la población es la mejor
+    //List<int> bestRoute = population.first;
+
+    //Calula la aptitud de la mejor ruta
+    //double bestFitness = calculateFitness(bestRoute, distanceMatrix);
+    //Muesta la evolución.
+    //displayEvolution(generation, bestRoute, bestFitness);
+  }
+
+  print(
+      'La mejor ruta encontrada con fitness: ${bestRouteAll['fitness']}, ${bestRouteAll['route']}');
+  print(
+      'La mejor ruta encontrada con fitness time: ${bestRouteAll['fitness']}, ${bestRouteAll['timeRoute']}');
+
+  arguments.sendPort.send(bestRouteAll);
+  return bestRouteAll;
+  //Mostrar informacion de si e al aire libre o no.
+  /* for (String placeName in bestRouteAll['route']) {
+      if (placeName != 'startingPoint') {
+        // Acceder al índice utilizando el mapa nameToIndex
+        print(placeName);
+        int index = nameToIndex[placeName]!;
+        PlaceData placeData =
+            places[index]; // Acceder a la instancia de PlaceData
+
+        // Ahora puedes acceder a los atributos de placeData
+        print('Nombre: ${placeData.name}');
+        print('¿Es al aire libre?: ${placeData.isOutdoor}');
+
+        resultPlaces.add(placeData);
+
+        // Agrega más atributos según sea necesario
+      }
+    } */
 }
