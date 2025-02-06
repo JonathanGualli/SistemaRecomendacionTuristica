@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -384,7 +385,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 color: groupedData[index][
-                                                            "maxPrecipitationProbability"] >
+                                                            "maxPrecipitationProbability"] >=
                                                         25
                                                     ? Colors.red
                                                     : Colors
@@ -495,12 +496,17 @@ class _ResultScreenState extends State<ResultScreen> {
                                                       size: 16,
                                                     ),
                                                     const SizedBox(width: 5),
-                                                    Text(
-                                                      placeDetails[
-                                                          "name"], // Nombre personalizado del lugar
-                                                      style: const TextStyle(
+                                                    Expanded(
+                                                      child: AutoSizeText(
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        placeDetails[
+                                                            "name"], // Nombre personalizado del lugar
+                                                        style: const TextStyle(
                                                           color: Colors.white70,
-                                                          fontSize: 12),
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
@@ -523,7 +529,9 @@ class _ResultScreenState extends State<ResultScreen> {
                                                     ),
                                                   ],
                                                 ),
-                                                Text(
+                                                AutoSizeText(
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                   opneningsPeriods[index],
                                                   style: const TextStyle(
                                                       color: Colors.white70,
