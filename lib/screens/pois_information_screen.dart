@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_null_comparison
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:tesis_v2/models/place_model.dart';
 import 'package:tesis_v2/providers/preferences_provider.dart';
 import 'package:tesis_v2/screens/climate_information_screen.dart';
 import 'package:tesis_v2/services/navigation_service.dart';
+import 'package:tesis_v2/services/snackbar_service.dart';
 import 'package:tesis_v2/utils/place_type_classifier.dart';
 import 'package:tesis_v2/utils/places_list.dart';
 
@@ -446,26 +449,18 @@ class _PoisInformationState extends State<PoisInformation> {
         // ignore: prefer_collection_literals
         Set(); //Conjunto para almacenar nombres de lugares únicos
 
+    //Logica para evitar duplicados by JG
     if (PreferencesProvider.instance.getSpecificPoiPreferences() != null) {
       List<PlaceData> specificPlaces =
           PreferencesProvider.instance.getSpecificPoiPreferences()!;
       allMarkers.addAll(
         specificPlaces.map(
           (place) {
-            //Verificamos si un lugar ya ha sido agregado
+            //Verificamos si un lugar ya ha sido agregado by JG
             if (!addedPlaceNames.contains(place.id)) {
-              //Agregar a la lista de lugares y al conjunto de nombres
+              //Agregar a la lista de lugares y al conjunto de nombres by JG
               allPLaces.add(place);
               addedPlaceNames.add(place.id);
-
-              /*  if (place.name == 'Museo del Louvre' &&
-                  !addedPlaceNames.contains('Louvre Museum')) {
-                addedPlaceNames.add('Louvre Museum');
-              }
-              if (place.name == 'Louvre Museum' &&
-                  !addedPlaceNames.contains('Museo del Louvre')) {
-                addedPlaceNames.add('Museo del Louvre');
-              } */
             }
             return Marker(
               markerId: MarkerId(place.name),
@@ -485,7 +480,6 @@ class _PoisInformationState extends State<PoisInformation> {
         setState(() {
           currentType = type;
         });
-
         final body = jsonEncode({
           "includedPrimaryTypes": [type],
           "maxResultCount": 10,
@@ -499,13 +493,14 @@ class _PoisInformationState extends State<PoisInformation> {
             }
           }
         });
-
+        // Utilizamos los headers para traer solo la información relevante del lugar by JG
         final headers = {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
           'X-Goog-FieldMask':
               'places.displayName,places.location,places.rating,places.id,places.regularOpeningHours,places.googleMapsUri'
         };
+        // Realizamos todo el proceso necesario para guardar los logares y clasificarlos by JG
         final response = await http.post(
           Uri.parse(url),
           headers: headers,
@@ -609,16 +604,17 @@ class _PoisInformationState extends State<PoisInformation> {
         } else {
           throw Exception('Failed to load places');
         }
+        // Esperar 2 segundos antes de otra llamada By JG
         await Future.delayed(const Duration(seconds: 2));
       }
       setState(() {
         markers = allMarkers;
         markers.add(Marker(
-          markerId: MarkerId("Punto de partida"),
+          markerId: const MarkerId("Punto de partida"),
           position: initialLocation,
           icon:
               BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-          infoWindow: InfoWindow(
+          infoWindow: const InfoWindow(
             title: 'Punto de Partida',
             snippet: 'Este es el punto de inicio de tu ruta',
           ),
@@ -630,7 +626,8 @@ class _PoisInformationState extends State<PoisInformation> {
       });
     }
 
-    await fetchTypes(types);
+    await fetchTypes(
+        types); //Realizar las llamadas encesarias por cada tipo de lugar by JG
   }
 
   void printPlaceData(List<PlaceData> places) {
@@ -646,5 +643,37 @@ class _PoisInformationState extends State<PoisInformation> {
       print('isMandatory: ${place.isMandatory}');
       print('-------------------');
     }
+  }
+
+  Widget hola(List<PlaceData> places) {
+    return ElevatedButton(
+      onPressed: () {
+        // Verifica que el campo de entrada no esté vacio by JG
+        if (ratingController.text.isEmpty) {
+          SnackBarService.instance.showSnackBar('Ingresa un valor', false);
+        } else {
+          setState(() {
+            double inputRating = double.parse(ratingController.text);
+            places = places.where((place) {
+              // Si la calificación del lugar es nula, lo expliuye del filtro
+              if (place.rating == null) {
+                return false;
+              }
+              double? placeRating = double.tryParse(place.rating);
+              if (placeRating == null) {
+                return false;
+              }
+              // Incluye el lugar si todo está correcto by JG
+              return placeRating >= inputRating;
+            }).toList();
+          });
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.purple,
+      ),
+      child: const Text('Filtrar por rating'),
+    );
   }
 }

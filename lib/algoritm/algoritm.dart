@@ -221,6 +221,7 @@ class _AlgoritmState extends State<Algoritm>
         openingPeriods: List.empty(),
       ),
     );
+
     fetchClimateData().then(
       (value) {
         startFunction();
@@ -1428,11 +1429,11 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
       int populationSize, List<String> names, int limit) {
     List<List<String>> population = [];
 
-    // Remover 'startingPoint' de la lista de nombres
+    // Remover 'startingPoint' de la lista de nombres by JG
     List<String> availableNames = List.from(names);
     availableNames.remove('startingPoint');
 
-    // Asegurarse de que limit no exceda el número de lugares disponibles
+    // Asegurarse de que limit no exceda el número de lugares disponibles by JG
     limit = limit.clamp(0, availableNames.length);
 
     for (int i = 0; i < populationSize; i++) {
@@ -1440,11 +1441,11 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
       List<String> selectedPlaces =
           (List.of(availableNames)..shuffle()).sublist(0, limit);
 
-      // Crear una nueva ruta que incluye el startingPoint
+      // Crear una nueva ruta que incluye el startingPoint by JG
       List<String> newRoute = List.from(selectedPlaces);
 
-      newRoute.insert(0,
-          'startingPoint'); // Insertar el punto de inicio en la primera posición.
+      // Insertar el punto de inicio en la primera posición by JG
+      newRoute.insert(0, 'startingPoint');
       population.add(newRoute);
     }
 
@@ -1468,26 +1469,26 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
         Random().nextInt(parent1.length - 1) + 1; // Evitar la posición 0
     int end = Random().nextInt(parent1.length - start) + start;
 
-    // Crear el offspring con el mismo tamaño que los padres y con el startingPoint fijo
+    // Crear el offspring con el mismo tamaño que los padres y con el startingPoint fijo by JG
     List<String> offspring = List.filled(parent1.length, '-1');
     offspring[0] =
         'startingPoint'; // Asegurar que el startingPoint esté en la primera posición
 
-    // Copiar la porción del primer padre (evitando la primera posición)
+    // Copiar la porción del primer padre (evitando la primera posición) by JG
     for (int i = start; i < end; i++) {
       offspring[i] = parent1[i];
     }
 
-    // Llenar los espacios vacíos con genes del segundo padre (evitar duplicados)
+    // Llenar los espacios vacíos con genes del segundo padre (evitar duplicados) by JG
     int currentIndex = end % parent1.length;
 
     for (int i = 1; i < parent2.length; i++) {
-      // Empezar desde el índice 1 para evitar el startingPoint
+      // Empezar desde el índice 1 para evitar el startingPoint by JG
       if (!offspring.contains(parent2[i]) && offspring.contains('-1')) {
         offspring[currentIndex] = parent2[i];
         currentIndex = (currentIndex + 1) % parent1.length;
 
-        // Si currentIndex es 0, saltar a la siguiente posición (1) para no sobrescribir el startingPoint
+        // Si currentIndex es 0, saltar a la siguiente posición (1) para no sobrescribir el startingPoint by JG
         if (currentIndex == 0) {
           currentIndex = 1;
         }
@@ -1498,13 +1499,13 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
   }
 
   List<String> mutate(List<String> route) {
-    // Generar índices aleatorios dentro de la ruta, evitando el índice 0 (startingPoint)
+    // Generar índices aleatorios dentro de la ruta, evitando el índice 0 (startingPoint) by JG
     int index1 = Random().nextInt(route.length - 1) + 1; // Evitar el índice 0
     int index2 = Random().nextInt(route.length - 1) + 1; // Evitar el índice 0
 
-    // Crear una ruta temporal para hacer el swap
+    // Crear una ruta temporal para hacer el swap by JG
     String temp = route[index1];
-    // Intercambiar los valores de index1 e index2
+    // Intercambiar los valores de index1 e index2 by JG
     route[index1] = route[index2];
     route[index2] = temp;
 
@@ -1520,20 +1521,17 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
     required List<dynamic>? climateDataList,
     required List<String> visitsTimes,
   }) {
-    //final Map<String, int> maxPrecipitations = {};
     List<bool> intervals = [];
     List<Map<String, dynamic>> groupedDataLocal = [];
 
     for (String visitTime in visitsTimes) {
-      // Parsear el intervalo de visitas.
+      // Parsear el intervalo de visitas by JG
       final times = visitTime.split('*');
       final visitStart = DateTime.parse(times[0]);
       final visitEnd = DateTime.parse(times[1]);
-
       int maxPrecipitation = 0;
       int weatherCode = 0;
-
-      // Buscar los datos de clima dentro del rango de la visita.
+      // Buscar los datos de clima dentro del rango de la visita by JG
       for (var climateEntry in climateDataList!) {
         final startTime = DateTime.parse(climateEntry['startTime']);
         if (startTime.isAfter(visitStart) && startTime.isBefore(visitEnd)) {
@@ -1556,7 +1554,6 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
       groupedData = groupedDataLocal;
       intervals.add(maxPrecipitation >= 25);
     }
-
     return intervals;
   }
 
@@ -1632,16 +1629,16 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
       localExtraTime += 5400;
     }
 
-    //para calcular la duracion de cada visita.
+    //para calcular la duracion de cada visita by JG
     double timeVisit = localExtraTime - totalTime;
 
-    //OBTENER EL TIEMPO DE CADA PUNTO VISITADO.
+    //OBTENER EL TIEMPO DE CADA PUNTO VISITADO BY JG
     DateTime startTimeLocal = DateTime.parse(arguments.dateStart);
     startTimeLocal =
         startTimeLocal.add(Duration(seconds: timeResultPlaces[0].round()));
     int visitDuration = 90 * 60; // 90 minutos en segundos
 
-    // Distribuir el tiempo adicional equitativamente
+    // Distribuir el tiempo adicional equitativamente by JG
     int extraTimePerSite = timeVisit ~/ route.length;
     DateTime endTimeLocal;
 
@@ -1673,7 +1670,7 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
       timeRoute.add("${timeMatrix[position1][position2]}");
       timeRoute.add(names[position2]);
 
-      // Penalización basada en el isOutdoorIntervals solo si no es el startingPoint
+      // Penalización basada en el isOutdoorIntervals solo si no es el startingPoint by JG
       bool isOutdoorPlace = places[position2].isOutdoor;
       if (isOutdoorPlace == intervals[i]) {
         if (isOutdoorPlace == true) {
@@ -1792,6 +1789,7 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
       timeLimit['extraTime'] = 3600;
     }
   }
+
   // EL tamaño de la poblacion inicial dependera de los intervalos que haya,
   // el limit.
 

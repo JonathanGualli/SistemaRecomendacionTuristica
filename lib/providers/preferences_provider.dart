@@ -8,7 +8,7 @@ class PreferencesProvider extends ChangeNotifier {
   String? _selectedCity; // Ciudad seleccionada
   LatLng? _initialLocation; // Punto de partida
   double _radius =
-      4000; //Por defecto sera de 4km. En el futuro sea modificable por el usuario
+      4000; //Por defecto sera de 4km. En el futuro seará modificable por el usuario
   List<String> _preferences = []; // Lista de preferencias
   TimeOfDay? _startTime; // Hora inicio del recorrido
   TimeOfDay? _endTime; //Hora fin del recorrido
@@ -17,13 +17,12 @@ class PreferencesProvider extends ChangeNotifier {
   List<PlaceData>? _places; // Totos los POI
   List<PlaceData> _resultPlaces = List.empty(growable: true); // Resultado final
   List<double> _timeResultPlaces =
-      List.empty(growable: true); // Resultado final
-  List<Map<String, dynamic>> _groupedData = [];
-  double _additionalTime = 0;
-  List<String> _openingsPeriods = [];
+      List.empty(growable: true); // tiempos Resultado final
+  List<Map<String, dynamic>> _groupedData = []; //Datos agrupados
+  double _additionalTime = 0; //Tiempo adicinal por itinerario
+  List<String> _openingsPeriods = []; // Horarios de apertura de cada POI
 
   //Getters
-
   DateTime getDate() {
     return _date;
   }
