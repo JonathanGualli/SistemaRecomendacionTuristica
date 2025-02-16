@@ -558,7 +558,8 @@ class _AlgoritmState extends State<Algoritm>
     bestRouteAll = result;
     setState(() {}); */
 
-    try {
+    // --------------------------------------------------------------------------------------
+/*     try {
       _isolate?.kill();
       _isolate = await Isolate.spawn(
           runGeneticAlgorithm,
@@ -575,12 +576,15 @@ class _AlgoritmState extends State<Algoritm>
           ));
     } on IsolateSpawnException catch (e) {
       print(e);
-    }
+    } */
+    // --------------------------------------------------------------------------------------
 
-    /*  bestRouteAll = runGeneticAlgorithm(
+    bestRouteAll = runGeneticAlgorithm(
       AlgorithmArguments(
-        generations: 550,
-        populationSize: 300,
+        //generations: 550,
+        //populationSize: 300,
+        generations: 100,
+        populationSize: 200,
         distanceMatrix: distanceMatrix,
         timeMatrix: timeMatrix,
         places: places,
@@ -589,7 +593,7 @@ class _AlgoritmState extends State<Algoritm>
         dateStart: dateStart,
         sendPort: _receivePort.sendPort,
       ),
-    ); */
+    );
 
 /*     runGeneticAlgorithm(550, 300, distanceMatrix, timeMatrix, places,
         nameToIndex, climateDataList); */
@@ -1750,6 +1754,8 @@ Map<String, dynamic> runGeneticAlgorithm(AlgorithmArguments arguments) {
 
 // IMPORTANTE: NO PONGO EL TIMEPO TOTAL EN EL FITNESS YA QUE VA RELACIONADO CON LA DISTANCIA TOTAL
 // Y PONERLO SERÍA REDUNDANTES Y PERJUDICIAL PARA MIS PENALIDADES.
+    print('distancia: $totalDistance');
+    print('penalizaion: $penalty');
     return {
       'fitness': totalDistance + penalty,
       'timeRoute': timeRoute,

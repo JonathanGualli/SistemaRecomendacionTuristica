@@ -408,6 +408,8 @@ class _ResultScreenState extends State<ResultScreen> {
                                     print(place.id);
                                     print(place.googleMapsUri);
                                     print(place.isMandatory);
+                                    print(opneningsPeriods);
+                                    //print(place.openingPeriods);
                                     //getVisitTime();
                                   },
                                   child: AnimatedContainer(

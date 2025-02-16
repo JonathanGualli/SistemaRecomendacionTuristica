@@ -85,36 +85,6 @@ class _SelectCityScreenState extends State<SelectCityScreen> {
             },
           ),
           logOutButtom(),
-          ElevatedButton(
-            onPressed: () {
-              String rutas = """
-Generation 0: Best route [Folie des Visites, Seven Squares Paris, Parque De Diversão, Flaneur, thanina thannina, Aventure Fantastique] with distance: 19.019284750809778
-Generation 1: Best route [Flaneur, Seven Squares Paris, Folie des Visites, Parque De Diversão, thanina thannina, Aventure Fantastique] with distance: 20.514320404231565
-Generation 2: Best route [thanina thannina, Seven Squares Paris, Folie des Visites, Parque De Diversão, Aventure Fantastique, Flaneur] with distance: 21.467484680523906
-Generation 3: Best route [Folie des Visites, Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Seven Squares Paris] with distance: 16.6329220398447
-Generation 4: Best route [Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Seven Squares Paris, Folie des Visites] with distance: 16.632922039844694
-Generation 5: Best route [Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Seven Squares Paris, Folie des Visites] with distance: 16.632922039844694
-Generation 6: Best route [Aventure Fantastique, Flaneur, Parque De Diversão, thanina thannina, Seven Squares Paris, Folie des Visites] with distance: 18.42741384426158
-Generation 7: Best route [Folie des Visites, Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Seven Squares Paris] with distance: 16.6329220398447
-Generation 8: Best route [Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Seven Squares Paris, Folie des Visites] with distance: 16.632922039844694
-Generation 9: Best route [Flaneur, Parque De Diversão, thanina thannina, Seven Squares Paris, Folie des Visites, Aventure Fantastique] with distance: 18.427413844261576
-Generation 10: Best route [thanina thannina, Seven Squares Paris, Folie des Visites, Aventure Fantastique, Flaneur, Parque De Diversão] with distance: 18.427413844261576
-Generation 11: Best route [Seven Squares Paris, Folie des Visites, Aventure Fantastique, Flaneur, Parque De Diversão, thanina thannina] with distance: 18.42741384426158
-Generation 12: Best route [Seven Squares Paris, Folie des Visites, thanina thannina, Flaneur, Aventure Fantastique, Parque De Diversão] with distance: 21.3884752513871
-Generation 13: Best route [Folie des Visites, thanina thannina, Flaneur, Aventure Fantastique, Parque De Diversão, Seven Squares Paris] with distance: 21.3884752513871
-Generation 14: Best route [Flaneur, Aventure Fantastique, Parque De Diversão, Seven Squares Paris, Folie des Visites, thanina thannina] with distance: 21.388475251387096
-Generation 15: Best route [Aventure Fantastique, Parque De Diversão, Seven Squares Paris, Folie des Visites, thanina thannina, Flaneur] with distance: 21.388475251387096
-Generation 16: Best route [thanina thannina, Flaneur, Seven Squares Paris, Folie des Visites, Aventure Fantastique, Parque De Diversão] with distance: 19.182837658331767
-Generation 17: Best route [Folie des Visites, Aventure Fantastique, Parque De Diversão, thanina thannina, Flaneur, Seven Squares Paris] with distance: 19.1828376583317
-Generation 18: Best route [Seven Squares Paris, Folie des Visites, Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique] with distance: 16.632922039844697
-Generation 19: Best route [Flaneur, Aventure Fantastique, Seven Squares Paris, Folie des Visites, Parque De Diversão, thanina thannina] with distance: 16.632922039844697
-La mejor ruta encontrada con fitness: 16.632922039844694, [Parque De Diversão, thanina thannina, Flaneur, Aventure Fantastique, Seven Squares Paris, Folie des Visites]
-""";
-
-              debugPrint(rutas);
-            },
-            child: Text('aplastame weeee'),
-          )
         ],
       ),
     );
